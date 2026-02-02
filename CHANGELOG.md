@@ -10,11 +10,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- Backend API implementation (FastAPI)
 - Frontend UI implementation (Next.js)
-- Database schema implementation
-- ThaiBMA integration
-- BAHTNET integration
+- Database models implementation
+- Full API implementation
+
+---
+
+## [0.2.0] - 2026-02-02
+
+### Added
+
+- **Backend Foundation**
+  - `src/backend/app/main.py` - FastAPI application entry point with CORS, lifespan
+  - `src/backend/app/config.py` - Pydantic settings configuration
+  - `src/backend/README.md` - Backend structure documentation
+
+- **Authentication & Security**
+  - `src/backend/app/core/auth.py` - JWT authentication with access/refresh tokens
+  - `src/backend/app/core/security.py` - Password hashing, validation utilities
+  - `src/backend/app/core/permissions.py` - Role-Based Access Control (RBAC)
+  - `src/backend/app/core/exceptions.py` - Custom exception handlers
+
+- **Business Services**
+  - `src/backend/app/services/calendar_service.py` - Thai business day calendar (2025-2026 holidays)
+  - `src/backend/app/services/settlement_service.py` - BAHTNET ISO20022 & TSD message generators
+
+- **API Routers**
+  - `src/backend/app/routers/auth.py` - Authentication endpoints (login, refresh, me)
+  - `src/backend/app/routers/health.py` - Health check endpoints
+
+- **Infrastructure**
+  - `docker-compose.local.yml` - Local Docker setup (PostgreSQL, Redis, Adminer)
+  - `scripts/init_db.sql` - Database initialization with 20+ tables
+  - `src/backend/requirements.txt` - Python dependencies
+  - `.env.example` - Environment variables template
+
+- **Documentation Updates**
+  - `docs/architecture/Development_Plan_Review_and_Concerns.md` - Phase review with risks
+  - Updated `docs/architecture/Local_Development_and_Testing_Guide.md` - Docker Desktop, WSL2, Windows setup
+  - Updated `docs/architecture/Condensed_Development_Plan.md` - BAHTNET as ISO20022 manual
+  - Updated `README.md` and `docs/index.md` with new documents
+
+- **Settlement Output Directories**
+  - `output/bahtnet/README.md` - BAHTNET message output (manual upload)
+  - `output/tsd/README.md` - TSD instruction output (manual entry)
+
+### Changed
+- BAHTNET integration clarified as manual ISO20022 message generation (no API)
+- TSD integration clarified as manual settlement instruction (no API)
 
 ---
 

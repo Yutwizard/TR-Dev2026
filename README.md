@@ -69,12 +69,20 @@ TR Dev2026/
 
 ## 📖 Documentation Quick Links
 
+### 🚀 Getting Started
+**New to this project?** Start here:
+1. [📍 **START_HERE.md**](START_HERE.md) - Navigation guide for all documents
+2. [🎯 **Development Approach Summary**](docs/architecture/Development_Approach_Summary.md) - How we develop (local-first)
+3. [🛠️ **Local Development Guide**](docs/architecture/Local_Development_and_Testing_Guide.md) - Set up your local environment
+4. [⚠️ **Development Plan Review & Concerns**](docs/architecture/Development_Plan_Review_and_Concerns.md) - **MUST READ** Critical issues and recommendations
+
 ### Analysis Documents
 - [Data Structure Analysis](docs/analysis/Data_Structure_Analysis.md) - Database schema analysis from Treasury System Database V2
 
 ### Architecture Documents
 - [Architecture & Implementation Guide](docs/architecture/Treasury_System_Architecture_and_Implementation_Guide.md) - System architecture, module design, and implementation roadmap
 - [Data to Architecture Mapping](docs/architecture/Data_to_Architecture_Mapping_and_Development_Guide.md) - Mapping data structures to system modules
+- [Condensed Development Plan](docs/architecture/Condensed_Development_Plan.md) - 10-week sprint plan (local-first)
 
 ### Requirements
 - [Treasury System Structure (PDF)](docs/requirements/Treasury_System_Structure.pdf) - Original requirements document
@@ -124,9 +132,10 @@ The system follows a **Modular Monolith Architecture** for optimal balance betwe
 
 ### Prerequisites
 
-- Python 3.11+
-- Node.js 18+
-- Docker (optional)
+- Python 3.11.x (recommended)
+- Node.js 18+ (LTS)
+- Docker Desktop (**REQUIRED** for database)
+- Git
 
 ### Installation
 
@@ -162,9 +171,9 @@ npm run dev
 
 | System | Purpose | Integration Method |
 |--------|---------|-------------------|
-| **ThaiBMA** | Market data, trade reporting | API/FTP |
-| **BAHTNET** | THB settlement | SWIFT MT |
-| **TSD** | Bond settlement (DVP) | DVP messaging |
+| **ThaiBMA** | Market data, trade reporting | API |
+| **BAHTNET** | THB settlement | **Manual input** - ISO20022 pacs.008/pacs.009 messages |
+| **TSD** | Bond settlement (DVP) | **Manual input** - Settlement instructions |
 | **BOT Reporting** | Regulatory compliance | Batch/API |
 
 ---

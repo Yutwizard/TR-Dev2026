@@ -1,18 +1,16 @@
-# Treasury Management System - Git Ignore Rules
+# Treasury Management System - Git Ignore
 
-# =============================================================================
-# Environment & Secrets
-# =============================================================================
+# ============================================================================
+# PYTHON
+# ============================================================================
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
 .env
-.env.local
-.env.*.local
-*.env
-secrets/
-credentials/
 
-# =============================================================================
-# Python
-# =============================================================================
+# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
@@ -34,134 +32,254 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv/
-.conda/
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Pytest
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+# Jupyter Notebook
+.ipynb_checkpoints
 
-# =============================================================================
-# Node.js / JavaScript
-# =============================================================================
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath
+*.sage.py
+
+# Environments
+.env
+.env.local
+.env.*.local
+.venv
+
+# ============================================================================
+# NODE / FRONTEND
+# ============================================================================
+# Dependencies
 node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Next.js
+.next/
+out/
+
+# Testing
+coverage/
+
+# Production
+build/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Build outputs
-.next/
-out/
-dist/
-build/
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# =============================================================================
-# IDE & Editors
-# =============================================================================
-# Visual Studio Code
-.vscode/
+# ============================================================================
+# DATABASES
+# ============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+!scripts/init_db.sql
+!scripts/migrations/*.sql
+
+# PostgreSQL
+*.dump
+*.backup
+
+# Redis
+dump.rdb
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+.dockerignore
+docker-compose.override.yml
+
+# ============================================================================
+# IDE / EDITORS
+# ============================================================================
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.code-workspace
 
-# JetBrains (IntelliJ, PyCharm, etc.)
+# PyCharm / IntelliJ
 .idea/
 *.iml
+*.iws
 *.ipr
 *.iws
+out/
 
-# Sublime Text
+# Sublime
 *.sublime-project
 *.sublime-workspace
+
+# Eclipse
+.project
+.classpath
+.settings/
 
 # Vim
 *.swp
 *.swo
 *~
 
-# =============================================================================
-# Operating System
-# =============================================================================
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msm
-*.msp
-*.lnk
+# Emacs
+*~
+\#*\#
+.\#*
 
+# ============================================================================
+# OPERATING SYSTEMS
+# ============================================================================
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+Icon
 ._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Linux
 *~
+.nfs*
 
-# =============================================================================
-# Project Specific
-# =============================================================================
+# ============================================================================
+# LOGS
+# ============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ============================================================================
+# SECURITY / SECRETS
+# ============================================================================
+# Certificates
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.p12
+*.pfx
+
+# Config files with secrets
+config.json
+secrets.json
+credentials.json
+service-account.json
+
+# AWS
+.aws/
+
+# Azure
+.azure/
+
+# GCP
+gcloud/
+*.json.key
+
+# ============================================================================
+# PROJECT SPECIFIC
+# ============================================================================
+# Data files (large)
+data/source/*.xlsx
+data/source/*.xls
+data/source/*.csv
+data/extracted/*.txt
+!data/extracted/README.md
+
+# Output files
+output/csv/*.csv
+output/json/*.json
+output/reports/*.pdf
+output/reports/*.xlsx
+
 # Temporary files
+tmp/
+temp/
 *.tmp
 *.temp
 *.bak
 *.backup
-*.old
 
-# Logs
-logs/
-*.log
+# Local development files
+local/
+local.settings.json
 
-# Output files (keep structure, ignore contents)
-output/csv/*.csv
-output/json/*.json
-!output/csv/.gitkeep
-!output/json/.gitkeep
-
-# Large data files (optional - uncomment if needed)
-# data/source/*.xlsx
-# data/extracted/*.txt
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# =============================================================================
-# Docker
-# =============================================================================
-docker-compose.override.yml
-.docker/
-
-# =============================================================================
-# Testing
-# =============================================================================
-coverage/
-*.lcov
-.nyc_output/
-
-# =============================================================================
-# Misc
-# =============================================================================
-*.pdf.bak
-*.docx.bak
-.cache/
+# ============================================================================
+# KEEP THESE FILES
+# ============================================================================
+# Do NOT ignore these
+!.gitkeep
+!docs/**/*.md
+!README.md
+!CHANGELOG.md
+!LICENSE

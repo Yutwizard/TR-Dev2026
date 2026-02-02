@@ -1,0 +1,113 @@
+# Treasury Management System - Local Development Environment
+# Usage: docker-compose -f docker-compose.local.yml up -d
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: tms_postgres_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tms_user
+      POSTGRES_PASSWORD: tms_password
+      POSTGRES_DB: treasury_local
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    command: >
+      postgres 
+      -c log_statement=all 
+      -c log_destination=stderr
+      -c max_connections=100
+      -c shared_buffers=256MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tms_user -d treasury_local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - tms_network
+
+  # ==========================================================================
+  # Redis Cache (for session, caching, rate limiting)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: tms_redis_local
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - tms_network
+
+  # ==========================================================================
+  # Adminer - Database GUI
+  # Access: http://localhost:8080
+  # System: PostgreSQL, Server: postgres, User: tms_user, Pass: tms_password
+  # ==========================================================================
+  adminer:
+    image: adminer:latest
+    container_name: tms_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: nette
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tms_network
+
+  # ==========================================================================
+  # Redis Commander - Redis GUI (optional, useful for debugging)
+  # Access: http://localhost:8081
+  # ==========================================================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: tms_redis_commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    depends_on:
+      - redis
+    networks:
+      - tms_network
+    profiles:
+      - debug  # Only starts with: docker-compose --profile debug up
+
+# ==========================================================================
+# Networks
+# ==========================================================================
+networks:
+  tms_network:
+    driver: bridge
+    name: tms_local_network
+
+# ==========================================================================
+# Volumes (Persistent Data)
+# ==========================================================================
+volumes:
+  postgres_data:
+    name: tms_postgres_data
+  redis_data:
+    name: tms_redis_data
