@@ -130,6 +130,10 @@ def get_sync_db() -> Generator:
         session.close()
 
 
+# Alias for common usage
+get_db = get_sync_db
+
+
 @contextmanager
 def get_db_session() -> Generator:
     """
