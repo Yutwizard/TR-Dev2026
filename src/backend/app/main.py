@@ -9,7 +9,14 @@ import logging
 
 from app.config import settings
 from app.core.exceptions import setup_exception_handlers
-from app.routers import auth_router, health_router
+from app.routers import (
+    auth_router,
+    health_router,
+    securities_router,
+    bond_trades_router,
+    positions_router,
+    calendar_router,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -47,8 +54,9 @@ app = FastAPI(
     - ThaiBMA trade reporting
     - T+2 settlement tracking
     - TFRS 9 compliance
+    - Thai business day calendar
     """,
-    version="0.1.0",
+    version="0.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
@@ -69,15 +77,10 @@ setup_exception_handlers(app)
 # Include routers
 app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
-
-# Future routers (uncomment as implemented)
-# app.include_router(securities_router, prefix="/api/v1/securities", tags=["Securities"])
-# app.include_router(counterparties_router, prefix="/api/v1/counterparties", tags=["Counterparties"])
-# app.include_router(bond_trades_router, prefix="/api/v1/bond-trades", tags=["Bond Trades"])
-# app.include_router(interbank_router, prefix="/api/v1/interbank", tags=["Interbank"])
-# app.include_router(repos_router, prefix="/api/v1/repos", tags=["Repo/RRP"])
-# app.include_router(positions_router, prefix="/api/v1/positions", tags=["Positions"])
-# app.include_router(settlement_router, prefix="/api/v1/settlement", tags=["Settlement"])
+app.include_router(securities_router, prefix="/api/v1/securities", tags=["Securities"])
+app.include_router(bond_trades_router, prefix="/api/v1/bond-trades", tags=["Bond Trades"])
+app.include_router(positions_router, prefix="/api/v1/positions", tags=["Positions"])
+app.include_router(calendar_router, prefix="/api/v1/calendar", tags=["Calendar"])
 
 
 @app.get("/", include_in_schema=False)
