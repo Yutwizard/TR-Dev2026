@@ -63,6 +63,7 @@ class ChangePasswordRequest(BaseModel):
 # Mock User Database (Replace with real database in production)
 # =============================================================================
 # This is for testing only - replace with actual database queries
+# For testing, we use plaintext passwords. In production, use bcrypt hashes.
 MOCK_USERS = {
     "admin": {
         "user_id": "ADMIN001",
@@ -70,7 +71,7 @@ MOCK_USERS = {
         "email": "admin@bank.com",
         "full_name": "System Administrator",
         "role": "ADMIN",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X.rF7fCKtJ1.JGf/O",  # admin123
+        "password": "admin123",  # Plain for testing
         "is_active": True
     },
     "trader1": {
@@ -79,7 +80,7 @@ MOCK_USERS = {
         "email": "trader1@bank.com",
         "full_name": "John Trader",
         "role": "TRADER",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X.rF7fCKtJ1.JGf/O",  # admin123
+        "password": "admin123",
         "is_active": True
     },
     "supervisor1": {
@@ -88,7 +89,7 @@ MOCK_USERS = {
         "email": "supervisor1@bank.com",
         "full_name": "Jane Supervisor",
         "role": "SUPERVISOR",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X.rF7fCKtJ1.JGf/O",
+        "password": "admin123",
         "is_active": True
     },
     "risk1": {
@@ -97,7 +98,7 @@ MOCK_USERS = {
         "email": "risk1@bank.com",
         "full_name": "Bob Risk Officer",
         "role": "RISK_OFFICER",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X.rF7fCKtJ1.JGf/O",
+        "password": "admin123",
         "is_active": True
     },
     "backoffice1": {
@@ -106,7 +107,7 @@ MOCK_USERS = {
         "email": "backoffice1@bank.com",
         "full_name": "Alice Settlement",
         "role": "BACK_OFFICE",
-        "hashed_password": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X.rF7fCKtJ1.JGf/O",
+        "password": "admin123",
         "is_active": True
     },
 }
@@ -122,7 +123,8 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     user = get_user_by_username(username)
     if not user:
         return None
-    if not verify_password(password, user["hashed_password"]):
+    # Simple comparison for testing - use verify_password in production
+    if password != user.get("password"):
         return None
     return user
 

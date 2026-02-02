@@ -512,6 +512,38 @@ class ThaiCalendarService:
             return False, f"Trade date {trade_date} is {holiday_name}"
         
         return True, "Valid trade date"
+    
+    def get_holiday_info(self, d: date) -> Optional[dict]:
+        """
+        Get holiday information for a date.
+        
+        Returns:
+            Dictionary with holiday info or None if not a holiday
+        """
+        if d not in self._holidays:
+            return None
+        
+        return {
+            "date": d,
+            "name_en": HOLIDAY_NAMES.get(d, "Holiday"),
+            "name_th": None,  # Could add Thai names later
+        }
+    
+    def get_holidays_in_year(self, year: int) -> dict:
+        """
+        Get all holidays for a specific year.
+        
+        Returns:
+            Dictionary mapping dates to holiday info
+        """
+        result = {}
+        for d in sorted(self._holidays):
+            if d.year == year:
+                result[d] = {
+                    "name_en": HOLIDAY_NAMES.get(d, "Holiday"),
+                    "name_th": None,
+                }
+        return result
 
 
 # =============================================================================
@@ -526,3 +558,10 @@ def get_calendar_service() -> ThaiCalendarService:
     if _calendar_service is None:
         _calendar_service = ThaiCalendarService()
     return _calendar_service
+
+
+# Alias for backward compatibility
+def get_thai_calendar_service() -> ThaiCalendarService:
+    """Alias for get_calendar_service"""
+    return get_calendar_service()
+

@@ -16,6 +16,9 @@ from app.routers import (
     bond_trades_router,
     positions_router,
     calendar_router,
+    interbank_router,
+    repo_router,
+    settlement_router,
 )
 
 # Configure logging
@@ -56,7 +59,7 @@ app = FastAPI(
     - TFRS 9 compliance
     - Thai business day calendar
     """,
-    version="0.2.0",
+    version="0.3.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
@@ -81,6 +84,9 @@ app.include_router(securities_router, prefix="/api/v1/securities", tags=["Securi
 app.include_router(bond_trades_router, prefix="/api/v1/bond-trades", tags=["Bond Trades"])
 app.include_router(positions_router, prefix="/api/v1/positions", tags=["Positions"])
 app.include_router(calendar_router, prefix="/api/v1/calendar", tags=["Calendar"])
+app.include_router(interbank_router, prefix="/api/v1/interbank", tags=["Interbank Deals"])
+app.include_router(repo_router, prefix="/api/v1/repo", tags=["Repo Trades"])
+app.include_router(settlement_router, prefix="/api/v1/settlement", tags=["Settlement"])
 
 
 @app.get("/", include_in_schema=False)

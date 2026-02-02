@@ -1,0 +1,29 @@
+# =============================================================================
+# Treasury Management System - Minimal Dependencies for Testing
+# =============================================================================
+
+# Core Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+starlette==0.36.3
+
+# Data Validation & Settings
+pydantic==2.6.1
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# Database
+sqlalchemy==2.0.25
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+bcrypt==4.1.2
+
+# Utilities
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.0.1
+httpx==0.26.0

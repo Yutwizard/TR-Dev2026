@@ -3,12 +3,12 @@ Treasury Management System - Database Connection
 =================================================
 
 Database engine, session management, and dependency injection.
+
+Uses lazy initialization to avoid import errors when 
+database drivers are not installed.
 """
 
-from typing import AsyncGenerator, Generator
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import sessionmaker, Session
+from typing import AsyncGenerator, Generator, Optional
 from contextlib import contextmanager
 import logging
 
@@ -19,52 +19,79 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# Sync Engine (for migrations and scripts)
+# Lazy Database Engine Initialization
 # =============================================================================
-sync_engine = create_engine(
-    settings.DATABASE_URL,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    pool_recycle=settings.DB_POOL_RECYCLE,
-    echo=settings.DEBUG,
-)
-
-SyncSessionLocal = sessionmaker(
-    bind=sync_engine,
-    autocommit=False,
-    autoflush=False,
-)
+_sync_engine = None
+_async_engine = None
+_SyncSessionLocal = None
+_AsyncSessionLocal = None
 
 
-# =============================================================================
-# Async Engine (for API)
-# =============================================================================
-# Convert postgresql:// to postgresql+asyncpg://
-async_database_url = settings.DATABASE_URL.replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+def get_sync_engine():
+    """Get or create sync database engine"""
+    global _sync_engine
+    if _sync_engine is None:
+        from sqlalchemy import create_engine
+        _sync_engine = create_engine(
+            settings.DATABASE_URL,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
+            pool_recycle=settings.DB_POOL_RECYCLE,
+            echo=settings.DEBUG,
+        )
+    return _sync_engine
 
-async_engine = create_async_engine(
-    async_database_url,
-    pool_size=settings.DB_POOL_SIZE,
-    max_overflow=settings.DB_MAX_OVERFLOW,
-    pool_recycle=settings.DB_POOL_RECYCLE,
-    echo=settings.DEBUG,
-)
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+def get_async_engine():
+    """Get or create async database engine"""
+    global _async_engine
+    if _async_engine is None:
+        from sqlalchemy.ext.asyncio import create_async_engine
+        async_database_url = settings.DATABASE_URL.replace(
+            "postgresql://", "postgresql+asyncpg://"
+        )
+        _async_engine = create_async_engine(
+            async_database_url,
+            pool_size=settings.DB_POOL_SIZE,
+            max_overflow=settings.DB_MAX_OVERFLOW,
+            pool_recycle=settings.DB_POOL_RECYCLE,
+            echo=settings.DEBUG,
+        )
+    return _async_engine
+
+
+def get_sync_session_local():
+    """Get or create sync session factory"""
+    global _SyncSessionLocal
+    if _SyncSessionLocal is None:
+        from sqlalchemy.orm import sessionmaker
+        _SyncSessionLocal = sessionmaker(
+            bind=get_sync_engine(),
+            autocommit=False,
+            autoflush=False,
+        )
+    return _SyncSessionLocal
+
+
+def get_async_session_local():
+    """Get or create async session factory"""
+    global _AsyncSessionLocal
+    if _AsyncSessionLocal is None:
+        from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+        _AsyncSessionLocal = async_sessionmaker(
+            bind=get_async_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autocommit=False,
+            autoflush=False,
+        )
+    return _AsyncSessionLocal
 
 
 # =============================================================================
 # Dependencies
 # =============================================================================
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_async_db() -> AsyncGenerator:
     """
     FastAPI dependency for async database sessions.
     
@@ -74,7 +101,8 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             result = await db.execute(select(Item))
             return result.scalars().all()
     """
-    async with AsyncSessionLocal() as session:
+    session_factory = get_async_session_local()
+    async with session_factory() as session:
         try:
             yield session
             await session.commit()
@@ -85,12 +113,13 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-def get_sync_db() -> Generator[Session, None, None]:
+def get_sync_db() -> Generator:
     """
     Dependency for sync database sessions.
     Used mainly for background tasks and scripts.
     """
-    session = SyncSessionLocal()
+    session_factory = get_sync_session_local()
+    session = session_factory()
     try:
         yield session
         session.commit()
@@ -102,7 +131,7 @@ def get_sync_db() -> Generator[Session, None, None]:
 
 
 @contextmanager
-def get_db_session() -> Generator[Session, None, None]:
+def get_db_session() -> Generator:
     """
     Context manager for sync database sessions.
     
@@ -111,7 +140,8 @@ def get_db_session() -> Generator[Session, None, None]:
             db.add(item)
             db.commit()
     """
-    session = SyncSessionLocal()
+    session_factory = get_sync_session_local()
+    session = session_factory()
     try:
         yield session
         session.commit()
@@ -127,23 +157,27 @@ def get_db_session() -> Generator[Session, None, None]:
 # =============================================================================
 def create_all_tables():
     """Create all database tables"""
-    Base.metadata.create_all(bind=sync_engine)
+    engine = get_sync_engine()
+    Base.metadata.create_all(bind=engine)
     logger.info("All database tables created")
 
 
 def drop_all_tables():
     """Drop all database tables (USE WITH CAUTION)"""
-    Base.metadata.drop_all(bind=sync_engine)
+    engine = get_sync_engine()
+    Base.metadata.drop_all(bind=engine)
     logger.warning("All database tables dropped")
 
 
 async def check_database_connection() -> bool:
     """Check if database is accessible"""
     try:
-        async with async_engine.begin() as conn:
+        engine = get_async_engine()
+        async with engine.begin() as conn:
             await conn.execute("SELECT 1")
         logger.info("Database connection successful")
         return True
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         return False
+
