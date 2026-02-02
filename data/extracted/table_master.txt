@@ -1,0 +1,13 @@
+=== Table master ===
+Rows: 9, Columns: 3
+
+ No.         Stage_master                                                                                                                                                             Description
+   1  Counterparty_Master                        This table serves as the single, authoritative repository for all external and internal entities with which the bank conducts treasury business.
+   2      Security_Master This table is a comprehensive catalog of every financial instrument the bank can trade or hold, aligned with standards from the Thai Bond Market Association (ThaiBMA).
+   3     Portfolio_Master                                                     This table allows for the logical segregation of the bank's treasury positions according to their strategic intent.
+   4      Interbank_Deals                                                                             This table records all interbank lending (placements) and borrowing (takings) transactions.
+   5          Repo_Trades                                                                                        This table captures the master details of each REPO or Reverse REPO transaction.
+   6 Collateral_Positions                                          This is a child table to Repo_Trades, providing a granular log of all securities allocated as collateral for a specific trade.
+   7          Bond_Trades                                                                      This table records all outright purchases and sales of bonds for the bank's investment portfolios.
+   8    Limit_Utilization                               This table provides an immutable, auditable log of every transaction that impacts a credit limit, enabling true pre-trade limit checking.
+   9       Bond_Positions                  This table maintains the current holding details for each bond investment. Each row represents a unique position in a bond under a specific portfolio.
