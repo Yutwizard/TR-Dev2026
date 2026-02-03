@@ -73,33 +73,35 @@
 
 | Field | Update Type | When | By Whom | Notes |
 |-------|-------------|------|---------|-------|
-| `security_id` | 🔒 | New issue | IT Admin | ThaiBMA symbol |
-| `isin` | 🔒 | New issue | IT Admin | Fixed |
-| `issuer_id` | 🔒 | New issue | IT Admin | 1=Govt, 2=BOT, 3=SOE, 4=Corp |
-| `unique_id` | 🔒 | New issue | IT Admin | BOT report ID |
-| `instrument_type` | 🔒 | New issue | IT Admin | T-Bill, Gov Bond, Corp Bond, etc. |
-| `issue_date` | 🔒 | New issue | IT Admin | Fixed |
-| `maturity_date` | 🔒 | New issue | IT Admin | Fixed |
-| `coupon_rate` | 🔒 | New issue | IT Admin | Fixed |
-| `coupon_margin` | 🔒 | New issue | IT Admin | For floating rate |
-| `coupon_reference_rate` | 🔒 | New issue | IT Admin | For floating rate |
-| `coupon_frequency` | 🔒 | New issue | IT Admin | Semi-Annual, Quarterly |
-| `coupon_day_count_conv` | 🔒 | New issue | IT Admin | ACT/365, 30/360, etc. |
-| `currency` | 🔒 | New issue | IT Admin | THB |
-| `country` | 🔒 | New issue | IT Admin | TH |
-| `bond_structure` | 🔒 | New issue | IT Admin | ZERO, Bullet, Amortizing |
+| `security_id` | 🔒 | New issue | Back Office | ThaiBMA symbol |
+| `isin` | 🔒 | New issue | Back Office | Fixed |
+| `issuer_id` | 🔒 | New issue | Back Office | 1=Govt, 2=BOT, 3=SOE, 4=Corp |
+| `unique_id` | 🔒 | New issue | Back Office | BOT report ID |
+| `instrument_type` | 🔒 | New issue | Back Office | T-Bill, Gov Bond, Corp Bond, etc. |
+| `issue_date` | 🔒 | New issue | Back Office | Fixed |
+| `maturity_date` | 🔒 | New issue | Back Office | Fixed |
+| `coupon_rate` | 🔒 | New issue | Back Office | Fixed |
+| `coupon_margin` | 🔒 | New issue | Back Office | For floating rate |
+| `coupon_reference_rate` | 🔒 | New issue | Back Office | For floating rate |
+| `coupon_frequency` | 🔒 | New issue | Back Office | Semi-Annual, Quarterly |
+| `coupon_day_count_conv` | 🔒 | New issue | Back Office | ACT/365, 30/360, etc. |
+| `currency` | 🔒 | New issue | Back Office | THB |
+| `country` | 🔒 | New issue | Back Office | TH |
+| `bond_structure` | 🔒 | New issue | Back Office | ZERO, Bullet, Amortizing |
 | `rating_tris` | 👤 | Rating change | Back Office | On TRIS update |
 | `rating_fitch` | 👤 | Rating change | Back Office | On Fitch update |
 | `is_eligible_bot_repo_collateral` | 👤 | Policy change | Back Office | When policy changes |
 | `is_eligible_crm_collateral` | 👤 | Policy change | Back Office | When policy changes |
 | `status` | 📅 | Maturity/Default | System | Auto on maturity date |
 | `status_timestamp` | ⏱️ | Status change | System | Auto timestamp |
-| `coupon_rate_type` | 🔒 | New issue | IT Admin | Fixed or Floating |
+| `coupon_rate_type` | 🔒 | New issue | Back Office | Fixed or Floating |
 | `cross_default` | 👤 | Default event | Back Office | On cross-default event |
 
 **Special Update Cases:**
 - **Status = Matured:** Automatically set when `CURRENT_DATE > maturity_date`
 - **Daily Price Update:** Does NOT update security_master directly - updates bond_positions via batch
+
+**Ownership Note:** Back Office manages complete Security Master lifecycle (new setup, rating updates, price imports, maturity processing). IT Admin provides system support only.
 
 ---
 

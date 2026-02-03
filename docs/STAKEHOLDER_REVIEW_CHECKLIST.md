@@ -20,6 +20,7 @@
 1. Review **Appendix A** (Table Structures) in Detailed Design
 2. Check data types and relationships
 3. Validate batch job schedules in Section 8
+4. Confirm Security Master is Back Office owned (IT provides infrastructure support only)
 
 ### For Management/Risk/Compliance
 1. Review approval workflows and limit management
@@ -77,6 +78,7 @@
 | Collateral Allocation | Allocate securities to repo trades with haircut | [ ] Approved | |
 | Margin Call Settlement | Cash margin posting, status updates | [ ] Approved | |
 | Counterparty Master | Rating updates, KYC status management | [ ] Approved | |
+| **Security Master** | **New security setup, rating updates, daily price imports** | [ ] Approved | |
 | Daily Batch Monitoring | Verify accrued interest calc at 18:00 | [ ] Approved | |
 
 **CRITICAL PROCESS - Requires Confirmation:**
@@ -95,11 +97,12 @@
 
 | Item | Description | Status | Comments |
 |------|-------------|--------|----------|
-| Security Master Setup | New bond setup (IT Admin initial, Back Office updates) | [ ] Approved | |
+| ~~Security Master Setup~~ | ~~Moved to Back Office~~ | N/A | See Back Office section |
 | Portfolio Configuration | Create portfolios with Treasury/Accounting approval | [ ] Approved | |
 | User Management | Create users, assign roles, password policy | [ ] Approved | |
 | Reference Data | BANK_CODE, Haircut Table, Holiday Calendar | [ ] Approved | |
 | Emergency Access | Super user access for emergency fixes (with approval) | [ ] Approved | |
+| System Configuration | ThaiBMA API settings, technical infrastructure | [ ] Approved | |
 
 **Open Decision:**
 > **Password Policy**

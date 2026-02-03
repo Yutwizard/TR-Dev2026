@@ -35,7 +35,7 @@
 | **Front Office** | Trade capture, pricing, execution | `bond_trades`, `interbank_deals`, `repo_trades` | Event-driven |
 | **Middle Office** | Limit checking, risk monitoring | `limit_utilization`, `margin_calls`, `bond_positions` | Control/Derived |
 | **Back Office** | Settlement, collateral, master data, accounting, **daily ThaiBMA price updates** | `collateral_positions`, `cash_margin_movements`, `position_costing`, `security_master`, `counterparty_master` | Transaction/Master |
-| **IT Admin** | User management, reference data, security master, portfolio setup | `users`, `roles`, `reference_data` | Configuration |
+| **IT Admin** | User management, reference data, portfolio setup, system configuration | `users`, `roles`, `reference_data` | Configuration |
 
 **Note on IT Admin Access:** IT Admin has special permissions to manage ALL tables for system maintenance and emergency fixes, but generally should not make routine data changes.
 
@@ -276,15 +276,18 @@ Step 4: System updates settlement_status on confirmation
 | **Limit Change** | `total_credit_line` | Credit Committee | `limit_utilization` |
 | **Rating Update** | `primary_credit_rating`, `rating_tris`, `rating_fitch` | Credit Risk | `counterparty_master`, `security_master` |
 
-#### Security Master Updates (Co-managed with IT Admin):
+#### Security Master Updates (Back Office Responsibility):
 
 | Event | Fields to Update | Source | Responsible | Frequency |
 |-------|------------------|--------|-------------|-----------|
-| **New Security Setup** | `security_id`, `isin`, `issuer_id`, `unique_id`, `instrument_type`, `issue_date`, `maturity_date`, `coupon_rate`, `coupon_frequency`, `day_count_conv` | ThaiBMA / Prospectus | **IT Admin** | On new issue |
+| **New Security Setup** | `security_id`, `isin`, `issuer_id`, `unique_id`, `instrument_type`, `issue_date`, `maturity_date`, `coupon_rate`, `coupon_frequency`, `day_count_conv` | ThaiBMA / Prospectus | **Back Office** | On new issue |
 | **Daily Price Update** | `clean_price`, `market_rate`, `accrued_interest_%` | ThaiBMA EOD file | **Back Office** | **Daily (Working Day)** |
 | **Rating Changes** | `rating_tris`, `rating_fitch` | TRIS/Fitch feeds | **Back Office** | On rating change |
 | **Maturity Processing** | `status` | Calendar | **Back Office** | On maturity |
 | **Status Updates** | `is_eligible_bot_repo_collateral`, `is_eligible_crm_collateral` | Policy changes | **Back Office** | As needed |
+| **System Configuration** | System-level settings | - | **IT Admin** | As needed |
+
+> **Note:** Back Office has full ownership of Security Master data. IT Admin provides system-level configuration support only (e.g., system parameters, integration settings).
 
 #### Back Office Daily Price Update Procedure:
 
@@ -464,23 +467,27 @@ On Coupon Payment Date:
 | **Govt_agency_code** | Government agency codes | When updates | BOT reference |
 | **Resident_definition** | MFSMCG residency rules | Rarely | BOT guidelines |
 
-### 5.3 Security Master Management (IT Admin - Initial Setup)
+### 5.3 Security Master Management (Back Office Responsibility)
 
-#### IT Admin Setup Responsibilities:
+#### Back Office Responsibilities:
 
 | Event | Fields to Configure | Source |
 |-------|---------------------|--------|
 | **New Security Setup** | `security_id`, `isin`, `issuer_id`, `unique_id`, `instrument_type`, `issue_date`, `maturity_date`, `coupon_rate`, `coupon_frequency`, `coupon_day_count_conv`, `currency`, `country`, `bond_structure`, `coupon_rate_type` | ThaiBMA / Prospectus |
-| **System Flags** | `is_eligible_bot_repo_collateral`, `is_eligible_crm_collateral` | Policy |
+| **Daily Price Update** | `clean_price`, `market_rate` | ThaiBMA EOD |
+| **Rating Changes** | `rating_tris`, `rating_fitch` | TRIS/Fitch feeds |
+| **Maturity Processing** | `status` | Calendar |
+| **Status Updates** | `is_eligible_bot_repo_collateral`, `is_eligible_crm_collateral`, `cross_default` | Policy changes |
 
-#### Back Office Updates (Day-to-Day):
+#### IT Admin Support (System Level Only):
 
-| Event | Fields to Update |
-|-------|------------------|
-| **Rating Changes** | `rating_tris`, `rating_fitch` |
-| **Price Updates** | Market data (auto from ThaiBMA) |
-| **Maturity Processing** | `status` |
-| **Status Updates** | `cross_default` |
+| Event | Fields/Settings | Purpose |
+|-------|-----------------|---------|
+| **System Configuration** | ThaiBMA API endpoints, file paths | Integration settings |
+| **User Permissions** | Security master module access | Access control |
+| **Technical Support** | Data import troubleshooting | System maintenance |
+
+> **Note:** Back Office owns the complete Security Master lifecycle - from new security setup to daily price updates to maturity processing. IT Admin provides technical infrastructure support only.
 
 ### 5.4 Portfolio Setup (IT Admin Responsibility)
 
@@ -869,7 +876,7 @@ if today == coupon_payment_date:
 
 | Data Type | Frequency | Responsible |
 |-----------|-----------|-------------|
-| **Security Master** | New issues | IT Admin (setup), Back Office (updates) |
+| **Security Master** | New issues, daily updates | **Back Office** |
 | **Counterparty Master** | Onboarding/Changes | Back Office |
 | **Haircut Table** | When BOT updates | IT Admin |
 | **Bank Codes** | When BOT updates | IT Admin |
@@ -1475,7 +1482,7 @@ if today == coupon_payment_date:
 
 | Data | Primary Owner | Secondary/Support |
 |------|---------------|-------------------|
-| **Security Master** | IT Admin (initial setup) | Back Office (day-to-day updates) |
+| **Security Master** | **Back Office** | IT Admin (technical support only) |
 | **Portfolio Master** | IT Admin | Treasury/Accounting (approval) |
 | **Counterparty Master** | Back Office | Credit Risk (approval for new) |
 | **Reference Data** | IT Admin | All teams (consumption) |
