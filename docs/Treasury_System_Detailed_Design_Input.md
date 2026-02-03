@@ -24,6 +24,8 @@
 10. [Appendix A: Actual Database Table Structures](#appendix-a-actual-database-table-structures)
 11. [Appendix B: Field Mapping Quick Reference](#appendix-b-field-mapping-quick-reference)
 
+> **📋 Quick Reference:** For a complete field-by-field update matrix showing which fields are updated daily, on deal input, or by scheduled events, see **[Field Update Matrix](./Field_Update_Matrix.md)**.
+
 ---
 
 ## 1. Team Responsibilities Overview
@@ -31,7 +33,7 @@
 | Team | Primary Functions | Key Tables | Data Nature |
 |------|-------------------|------------|-------------|
 | **Front Office** | Trade capture, pricing, execution | `bond_trades`, `interbank_deals`, `repo_trades` | Event-driven |
-| **Middle Office** | Limit checking, risk monitoring, ECL | `limit_utilization`, `margin_calls`, `bond_positions` | Control/Derived |
+| **Middle Office** | Limit checking, risk monitoring | `limit_utilization`, `margin_calls`, `bond_positions` | Control/Derived |
 | **Back Office** | Settlement, collateral, master data, accounting, **daily ThaiBMA price updates** | `collateral_positions`, `cash_margin_movements`, `position_costing`, `security_master`, `counterparty_master` | Transaction/Master |
 | **IT Admin** | User management, reference data, security master, portfolio setup | `users`, `roles`, `reference_data` | Configuration |
 
@@ -103,6 +105,7 @@
 | Limit Type | Description | Check Timing | Table |
 |------------|-------------|--------------|-------|
 | `SINGLE_TXN` | Maximum single transaction | Pre-trade | `limit_utilization` |
+| `FOUR_EYES` | Mandatory second approval | All trades | `bond_trades`, `interbank_deals`, `repo_trades` |
 | `AGGREGATE` | Total exposure per counterparty | Pre-trade + daily | `limit_utilization` |
 | `TENOR` | Maximum maturity allowed | Pre-trade | `limit_utilization` |
 | `CONCENTRATION` | Sector/issuer limits | Daily monitoring | `limit_utilization` |
@@ -137,22 +140,15 @@ limit_utilization table:
 
 ### 3.2 TFRS 9 / ECL Management
 
-#### ECL Stage Determination:
-
-| Stage | Trigger | ECL Measurement | Update Frequency |
-|-------|---------|-----------------|------------------|
-| **Stage 1** | No significant deterioration | 12-month ECL | Monthly |
-| **Stage 2** | Significant credit deterioration | Lifetime ECL | On trigger |
-| **Stage 3** | Credit-impaired (objective evidence) | Lifetime ECL | On trigger |
-
-#### ECL Input Parameters:
-
-| Parameter | Source | Update Frequency | Field |
-|-----------|--------|------------------|-------|
-| PD (Probability of Default) | Internal model / Rating | Monthly | Calculated |
-| LGD (Loss Given Default) | Historical data | Annual | Calculated |
-| EAD (Exposure at Default) | Position amount | Daily | `bond_positions` |
-| Macroeconomic factors | GDP, unemployment | Quarterly | External feed |
+> **⚠️ NOTE: ECL calculation is NOT included in this system.**
+> 
+> ECL (Expected Credit Loss) calculation under TFRS 9 will be handled by the bank's **existing Risk/Finance system** (e.g., Moody's Analytics, SAS, or internal risk platform).
+> 
+> This treasury system only provides **raw position data** for ECL calculation via:
+> - `bond_positions` - position amounts, counterparty info
+> - `counterparty_master` - credit ratings, entity mappings
+> - `interbank_deals` - lending exposures
+> - `repo_trades` - repo exposures
 
 #### Portfolio Classification (from Excel):
 
@@ -191,8 +187,8 @@ Status: Pending → Agreed → Settled
 
 | Settlement System | Security Type | DVP Model | Cutoff Time |
 |-------------------|---------------|-----------|-------------|
-| **TSD** | Corporate bonds | Model 1 (gross, trade-by-trade) | 14:00 same-day |
-| **BAHTNET** | Government bonds | RTGS | Real-time |
+| **TSD** | Corporate bonds | Model 1 (gross, trade-by-trade) via SWIFT MT | 14:00 same-day |
+| **BAHTNET** | Government bonds | RTGS (Manual Upload) | Real-time |
 
 #### Settlement Status Workflow:
 
@@ -208,6 +204,26 @@ Status: Pending → Agreed → Settled
 |-------|-------------|--------------|-------|
 | `settlement_status` | Current status | On status change | `bond_trades`, `interbank_deals`, `repo_trades` |
 | `confirmation_ref` | ISO 20022 confirmation ref | On confirmation | `interbank_deals` |
+
+#### BAHTNET Settlement Process (Manual Upload):
+
+```
+Step 1: System generates SWIFT MT103 message file
+Step 2: Back Office downloads file from system
+Step 3: Back Office logs into BAHTNET portal (https://www.bahtnet.net)
+Step 4: Upload MT103 file to portal
+Step 5: Confirm transaction in portal
+Step 6: Update settlement_status = 'Settled' in system
+```
+
+#### TSD Settlement Process (SWIFT MT):
+
+```
+Step 1: Trade confirmed → System generates SWIFT MT540/MT541
+Step 2: File sent to TSD via SWIFT network
+Step 3: TSD processes and returns MT544/MT545 confirmation
+Step 4: System updates settlement_status on confirmation
+```
 
 ### 4.2 Collateral Management
 
@@ -392,7 +408,6 @@ On Coupon Payment Date:
 | **Costing Update** | After each trade | `position_costing` | < 5 minutes |
 | **Accrual Calculation** | 18:30 | Journal entries | < 15 minutes |
 | **MTM Valuation** | 19:00 | `bond_positions` | < 15 minutes |
-| **ECL Calculation** | Monthly, 20:00 | `bond_positions` | < 1 hour |
 | **Journal Generation** | 19:30 | GL interface | < 15 minutes |
 | **ThaiBMA Reporting** | Every 5 min | `bond_trades` | < 1 minute |
 | **Margin Calculation** | 17:00 | `margin_calls` | < 30 minutes |
@@ -797,7 +812,7 @@ daily_accrued = (nominal_amount × coupon_rate × days) / day_count_base
 | **Costing Update** | 19:15 | `position_costing` | < 10 minutes | Position build |
 | **Journal Generation** | 19:30 | GL interface | < 15 minutes | All above |
 | **ThaiBMA Reporting** | Every 5 min | `bond_trades` | < 1 minute | Real-time |
-| **ECL Calculation** | Monthly, 20:00 | `bond_positions` | < 1 hour | Month-end |
+
 
 #### Weekend/Holiday Handling:
 
@@ -922,15 +937,17 @@ if today == coupon_payment_date:
 
 ### 9.5 Stage Master
 
-**Purpose:** TFRS 9 stage definitions  
+**Purpose:** TFRS 9 stage definitions (reference data only - not used for ECL calculation in this system)  
 **Values:**
-| Stage | Description | ECL Type |
-|-------|-------------|----------|
-| 1 | No significant deterioration | 12-month ECL |
-| 2 | Significant credit deterioration | Lifetime ECL |
-| 3 | Credit-impaired | Lifetime ECL |
+| Stage | Description |
+|-------|-------------|
+| 1 | No significant deterioration |
+| 2 | Significant credit deterioration |
+| 3 | Credit-impaired |
 
-**Maintenance:** Rarely changes (IT Admin manages)
+**Note:** ECL calculation is handled by the bank's Risk/Finance system. This table is for reference only.
+
+**Maintenance:** Risk/Finance system (IT Admin manages reference data)
 
 ### 9.6 Holiday Calendar
 
@@ -944,6 +961,8 @@ if today == coupon_payment_date:
 ## Appendix A: Actual Database Table Structures
 
 **Source:** Extracted from `Treasury_System_Database_V2_Internal.xlsx` (Sheet: `All Table_V4_Clean`)
+
+> **📋 Field Update Details:** For information on when and how each field is updated (daily batch, deal input, manual, etc.), refer to the **[Field Update Matrix](./Field_Update_Matrix.md)**.
 
 > **Note:** The following tables are defined exactly as per the source Excel file. All field names, data types, and descriptions match the source data.
 
@@ -1448,7 +1467,7 @@ if today == coupon_payment_date:
 | Team | Primary Responsibilities |
 |------|-------------------------|
 | **Front Office** | Trade capture, pricing, execution |
-| **Middle Office** | Limit management, risk monitoring, TFRS 9/ECL, approval workflow |
+| **Middle Office** | Limit management, risk monitoring, approval workflow |
 | **Back Office** | Settlement, collateral, master data (counterparty), accounting (costing, P&L, journals) |
 | **IT Admin** | User management, reference data, security master setup, portfolio setup, emergency fixes |
 
@@ -1461,15 +1480,28 @@ if today == coupon_payment_date:
 | **Counterparty Master** | Back Office | Credit Risk (approval for new) |
 | **Reference Data** | IT Admin | All teams (consumption) |
 
-### Pending Decisions:
+### Decisions Confirmed:
 
-- [ ] Confirm four-eyes approval thresholds
-- [ ] Validate ECL calculation methodology (simplified vs full model)
-- [ ] Confirm BAHTNET integration method (API vs manual file upload)
-- [ ] Determine TSD message format (SWIFT MT vs proprietary)
-- [ ] Approve password policy requirements
-- [ ] Confirm retention period for immutable tables
-- [ ] Define escalation procedure for IT Admin emergency changes
+| Item | Decision | Notes |
+|------|----------|-------|
+| **Four-Eyes Approval** | ✅ **ALL transactions** require approval | No amount threshold - every trade must be approved by second person |
+| **ECL Calculation** | ❌ **NOT included** in this system | Handled by existing Risk/Finance system |
+| **BAHTNET Integration** | **Manual upload** to BAHTNET portal | Back Office generates file, uploads manually to BOT portal |
+| **TSD Message Format** | **SWIFT MT** | MT messaging standard for TSD settlement |
+| **Password Policy** | ⏳ Decide later | To be defined in security policy document |
+| **Retention Period** | ⏳ Decide later | To be defined in data retention policy |
+| **IT Admin Emergency** | ⏳ Define later | Escalation procedure TBD |
+
+### ECL Scope Clarification:
+
+> **ECL calculation is OUT OF SCOPE for this treasury system.**
+
+This system provides **raw data feeds** to the Risk/Finance system for ECL calculation:
+- Daily position snapshots → Risk system
+- Counterparty master data → Risk system  
+- Trade transaction data → Risk system
+
+**No ECL-related fields** will be stored in this system's database.
 
 ### Change Log:
 

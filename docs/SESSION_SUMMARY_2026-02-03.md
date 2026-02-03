@@ -37,7 +37,7 @@ Today we focused on **detailed design documentation** based on the actual Excel 
 | Team | Primary Responsibilities |
 |------|-------------------------|
 | **Front Office** | Trade capture (bond, interbank, repo), pricing, execution |
-| **Middle Office** | Limit management, risk monitoring, TFRS 9/ECL, approval workflow |
+| **Middle Office** | Limit management, risk monitoring, approval workflow |
 | **Back Office** | Settlement, collateral management, master data, accounting, **daily ThaiBMA price updates** |
 | **IT Admin** | User management, reference data, security master setup, portfolio setup, emergency fixes |
 
@@ -101,17 +101,53 @@ CANCELLED REJECTED   FAILED
 
 ---
 
-### 5. Git Commits
+### 5. Created Field Update Matrix
+
+**New Document:** `docs/Field_Update_Matrix.md` (35KB, 35 tables)
+
+**Purpose:** Comprehensive reference showing which fields are updated when, by what process, and under what conditions.
+
+**Content:**
+| Section | Tables Covered | Update Types |
+|---------|----------------|--------------|
+| Master Data | entity_master, counterparty_master, security_master, portfolio_master, netting_agreement | 🔒 Immutable, 👤 Manual, 📅 Scheduled |
+| Transaction | bond_trades, bond_transactions, interbank_deals, interbank_interest_schedule, repo_trades | 📝 Deal Input, 🔄 Daily Batch |
+| Position/Collateral | collateral_positions, bond_positions, position_costing, position_realization_events | ⏱️ Real-time, 🔄 Daily Batch |
+| Control/Risk | margin_calls, cash_margin_movements, limit_utilization, entity_counterparty | 👤 Workflow, 🔄 Daily Calc |
+
+**Legend:**
+| Symbol | Meaning |
+|--------|---------|
+| 🔄 | Daily Batch Update (18:00-19:00) |
+| 📝 | Deal Input (Trade Capture) |
+| ⏱️ | Real-time Event |
+| 📅 | Scheduled Event (Coupon, Maturity) |
+| 👤 | Manual Update (Back Office/Middle Office) |
+| 🔒 | System Calculated (Immutable) |
+
+**Special Scenarios Documented:**
+- **Margin Call (REPO):** Daily MTM → Compare collateral vs exposure → Generate call → Settlement workflow
+- **Coupon Payment:** Auto-detect coupon date → Reset accrued_interest → Create transaction → GL entries
+- **Bond Maturity:** Auto-set status on maturity_date → Archive position → Final redemption
+- **Collateral Substitution:** Validate → Release old → Allocate new → Recalculate margin
+- **Limit Breach:** Pre-trade check → Block if >100% → Warn if >90%
+
+**Cross-Reference:** Added links in `Treasury_System_Detailed_Design_Input.md` pointing to Field Update Matrix
+
+---
+
+### 6. Git Commits
 
 | Commit | Message | Files Changed |
 |--------|---------|---------------|
 | `7c87d07` | docs: Add detailed design input document with team responsibilities and table structures | 4 files (+1958 lines) |
 | `fc2e69c` | docs: Update accrued interest calculation to use day count convention from each transaction | 1 file (+84/-18 lines) |
+| `[pending]` | docs: Add Field Update Matrix with field-by-field update details | 2 files (+673 lines, +2 refs) |
 
 **Total Changes:**
-- 2 new documents created
+- 3 new documents created
 - 1 extraction script added
-- 1 existing file updated
+- 2 existing files updated with cross-references
 
 ---
 
@@ -120,7 +156,8 @@ CANCELLED REJECTED   FAILED
 ### New Files:
 ```
 docs/
-└── Treasury_System_Detailed_Design_Input.md    # Comprehensive design document (65KB)
+├── Treasury_System_Detailed_Design_Input.md    # Comprehensive design document (65KB)
+├── Field_Update_Matrix.md                       # NEW: Field-by-field update reference (35KB)
 
 data/extracted/
 └── table_structures.md                          # Auto-extracted table definitions
@@ -133,7 +170,8 @@ scripts/
 ```
 docs/
 ├── SESSION_SUMMARY_2026-02-02.md               # Added quick start commands
-└── Treasury_System_Detailed_Design_Input.md    # Multiple revisions
+├── Treasury_System_Detailed_Design_Input.md    # Added Field Update Matrix links
+└── SESSION_SUMMARY_2026-02-03.md               # This file - updated with Matrix details
 ```
 
 ---
@@ -143,8 +181,9 @@ docs/
 | Document | Lines | Sections | Tables Documented |
 |----------|-------|----------|-------------------|
 | Treasury_System_Detailed_Design_Input.md | ~1,400 | 11 | 18 |
+| Field_Update_Matrix.md | ~673 | 7 | 18 (+ update rules) |
 
-**Sections:**
+**Sections in Detailed Design Input:**
 1. Team Responsibilities Overview
 2. Front Office (Trading Team)
 3. Middle Office (Risk & Compliance)
@@ -156,6 +195,15 @@ docs/
 9. Reference Data Tables
 10. Appendix A: Actual Database Table Structures (18 tables)
 11. Appendix B: Field Mapping Quick Reference
+
+**Sections in Field Update Matrix:**
+1. Legend (Update Type Symbols)
+2. Master Data Tables (5 tables)
+3. Transaction Tables (5 tables)
+4. Position & Collateral Tables (4 tables)
+5. Control & Risk Tables (4 tables)
+6. Summary by Update Frequency
+7. Special Update Scenarios (5 scenarios)
 
 ---
 
@@ -183,17 +231,41 @@ docs/
 - ✅ Supports ACT/365, ACT/360, 30/360, ACT/ACT, NL/365
 - ✅ No hardcoded values - all from master/transaction data
 
+### 5. Approval & Settlement (Newly Confirmed)
+- ✅ **Four-eyes approval required for ALL transactions** (no amount threshold)
+- ✅ **BAHTNET settlement: Manual file upload to BOT portal**
+- ✅ **TSD settlement: SWIFT MT messaging standard**
+- ✅ **ECL calculation: NOT included in this system** (handled by Risk/Finance system)
+
 ---
 
-## 📝 Pending Items for Review
+## ✅ Decisions Confirmed
 
-- [ ] Confirm four-eyes approval thresholds (currently > THB 10M for bonds)
-- [ ] Validate ECL calculation methodology (simplified vs full model)
-- [ ] Confirm BAHTNET integration method (API vs manual file upload)
-- [ ] Determine TSD message format (SWIFT MT vs proprietary)
-- [ ] Approve password policy (12 chars, 90-day expiry, etc.)
-- [ ] Confirm retention period for immutable tables (currently 5 years)
-- [ ] Define escalation procedure for IT Admin emergency changes
+| Item | Decision | Impact |
+|------|----------|--------|
+| **Four-Eyes Approval** | ALL transactions require approval (no threshold) | Every bond trade, interbank deal, and repo trade must be approved by second person |
+| **ECL Calculation** | ❌ **NOT included** - handled by Risk/Finance system | This system provides raw data feeds only |
+| **BAHTNET Settlement** | Manual upload to portal | Back Office generates MT103 file, uploads manually to BOT BAHTNET portal |
+| **TSD Settlement** | SWIFT MT format | MT540/MT541 for instructions, MT544/MT545 for confirmations |
+| **Password Policy** | ⏳ Decide later | Deferred to security policy document |
+| **Retention Period** | ⏳ Decide later | Deferred to data retention policy |
+| **IT Admin Emergency** | ⏳ Define later | Escalation procedure to be defined |
+
+### ECL Scope Clarification
+
+> **ECL calculation is OUT OF SCOPE for this treasury system.**
+
+The bank's existing **Risk/Finance system** (e.g., Moody's Analytics, SAS, or internal risk platform) will handle ECL calculation under TFRS 9.
+
+**This system provides:**
+- Raw position data (`bond_positions`, `interbank_deals`, `repo_trades`)
+- Counterparty master data (`counterparty_master`, `entity_master`)
+- Daily data extracts for Risk system consumption
+
+**This system does NOT:**
+- Calculate ECL amounts
+- Store ECL staging (Stage 1/2/3)
+- Perform TFRS 9 impairment assessment
 
 ---
 
@@ -220,11 +292,20 @@ docs/
 
 | Document | Purpose | Location |
 |----------|---------|----------|
-| **Treasury_System_Detailed_Design_Input.md** | Main design reference | `docs/` |
+| **Treasury_System_Detailed_Design_Input.md** | Main design reference with team responsibilities | `docs/` |
+| **Field_Update_Matrix.md** | Field-by-field update timing and scenarios | `docs/` |
 | **table_structures.md** | Extracted table definitions | `data/extracted/` |
 | **SESSION_SUMMARY_2026-02-02.md** | Yesterday's progress | `docs/` |
 | **Condensed_Development_Plan.md** | 10-week sprint plan | `docs/architecture/` |
 | **Data_to_Architecture_Mapping.md** | Architecture mapping | `docs/architecture/` |
+
+**Document Relationships:**
+```
+Treasury_System_Detailed_Design_Input.md (main)
+    ├── Links to → Field_Update_Matrix.md (field updates)
+    ├── Links to → table_structures.md (extracted data)
+    └── References → All architecture docs
+```
 
 ---
 
