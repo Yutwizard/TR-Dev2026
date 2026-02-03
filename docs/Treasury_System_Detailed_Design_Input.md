@@ -355,7 +355,7 @@ realized_gainloss = (sell_clean_price_pct - avg_book_price_pct) × sold_nominal
 | `rehypothecation` | Re-pledged securities | Σ Rehypothecation | Daily | `bond_positions` |
 | `avg_book_clean_price_pct` | WAC for remaining position | Changes only on buys | On trade | `bond_positions` |
 | `book_value` | Carrying amount at amortized cost | Clean Price × Nominal ÷ 100 | Daily | `bond_positions` |
-| `accrued_interest` | Accrued coupon interest | Nominal × Coupon% × Days/365 | **Daily (System Batch)** | `bond_positions` |
+| `accrued_interest` | Accrued coupon interest | Nominal × Coupon% × Days/DCC | **Daily (System Batch)** | `bond_positions` |
 | `market_value` | (Price% × Nominal/100) + Accrued | Calculated | **Daily (System Batch)** | `bond_positions` |
 | `realized_gain_loss` | Realized P&L from sales | Calculated | On sale | `bond_positions` |
 | `unrealized_gain_loss` | MTM P&L on remaining amount | MarketValue - BookValue | **Daily** | `bond_positions` |
@@ -365,8 +365,13 @@ realized_gainloss = (sell_clean_price_pct - avg_book_price_pct) × sold_nominal
 **System Calculation (18:00 Daily Batch):**
 ```
 For each active bond position:
-    Daily Accrual = NominalAmount × CouponRate% × (1/365)
-    AccruedInterest = AccruedInterest + DailyAccrual
+    1. Get Day Count Convention from security_master.coupon_day_count_conv
+    2. Calculate daily accrual based on convention:
+       - ACT/365: Daily = Nominal × Coupon% × (1/365)
+       - ACT/360: Daily = Nominal × Coupon% × (1/360)
+       - 30/360: Daily = Nominal × Coupon% × (1/360)
+       - ACT/ACT: Daily = Nominal × Coupon% × (1/ActualDaysInYear)
+    3. AccruedInterest = AccruedInterest + DailyAccrual
     
 On Coupon Payment Date:
     AccruedInterest = 0 (reset)
@@ -686,17 +691,50 @@ CANCELLED                      FAILED    MARGIN_CALL (if needed)
 
 #### Accrued Interest Calculation (System Batch):
 
-| Field | Calculation Method | Update Frequency | Table |
-|-------|-------------------|------------------|-------|
-| `accrued_interest` | Nominal × Coupon% × Days/365 | **Daily** | `bond_positions` |
-| `accrued_interest` | Principal × Rate% × Days/365 | **Daily** | `interbank_deals` |
-| `accrued_interest` | Cash × RepoRate% × Days/365 | **Daily** | `repo_trades` |
-| `daily_accrued_int_receivable` | Balance × MarginRate × 1/365 | **Daily** | `cash_margin_movements` |
+| Field | Calculation Method | Day Count Source | Update Frequency | Table |
+|-------|-------------------|------------------|------------------|-------|
+| `accrued_interest` | Nominal × Coupon% × Days/DayCountBase | `security_master.coupon_day_count_conv` | **Daily** | `bond_positions` |
+| `accrued_interest` | Principal × Rate% × Days/DayCountBase | `interbank_deals.day_count_convention` | **Daily** | `interbank_deals` |
+| `accrued_interest` | Cash × RepoRate% × Days/DayCountBase | `repo_trades.day_count_convention` | **Daily** | `repo_trades` |
+| `daily_accrued_int_receivable` | Balance × MarginRate × Days/DayCountBase | `cash_margin_movements.day_count_basis` | **Daily** | `cash_margin_movements` |
 
-**Day Count Conventions:**
-- **ACT/365**: Actual days divided by 365 (most common)
-- **30/360**: 30-day month, 360-day year (for specific bonds)
-- **ACT/ACT**: Actual days divided by actual year days
+**Day Count Conventions (from transaction/master data):**
+
+| Convention | Calculation Method | Usage |
+|------------|-------------------|-------|
+| **ACT/365** | Actual days ÷ 365 | Most common for THB bonds |
+| **ACT/360** | Actual days ÷ 360 | Some short-term instruments |
+| **30/360** | 30-day month, 360-day year | Corporate bonds, some SOE |
+| **ACT/ACT** | Actual days ÷ Actual year days | Government bonds (some) |
+| **NL/365** | Non-leap year days ÷ 365 | Specific instruments |
+
+**System Logic:**
+```python
+# Read day count convention from transaction/bond
+if table == 'bond_positions':
+    dcc = security_master.coupon_day_count_conv
+elif table == 'interbank_deals':
+    dcc = interbank_deals.day_count_convention
+elif table == 'repo_trades':
+    dcc = repo_trades.day_count_convention
+
+# Calculate days based on convention
+if dcc == 'ACT/365':
+    days = actual_days_between_dates
+    day_count_base = 365
+elif dcc == 'ACT/360':
+    days = actual_days_between_dates
+    day_count_base = 360
+elif dcc == '30/360':
+    days = (360 * (y2 - y1) + 30 * (m2 - m1) + (d2 - d1))
+    day_count_base = 360
+elif dcc == 'ACT/ACT':
+    days = actual_days_between_dates
+    day_count_base = actual_days_in_year
+
+# Calculate daily accrued
+daily_accrued = (nominal_amount × coupon_rate × days) / day_count_base
+```
 
 ### 7.2 Price Validation Rules
 
@@ -772,11 +810,32 @@ CANCELLED                      FAILED    MARGIN_CALL (if needed)
 #### Accrued Interest Calculation Rules:
 
 ```python
-# Daily Accrued Interest Formula
-if coupon_frequency in ['Semi-Annual', 'Annual']:
-    daily_accrued = (nominal_amount × coupon_rate) / 365
-    
-# Cumulative accrued (resets on coupon payment)
+# Daily Accrued Interest Formula (using Day Count Convention from transaction)
+
+# Step 1: Get Day Count Convention from source
+dcc = get_day_count_convention(transaction_type, transaction_id)
+# Sources: security_master.coupon_day_count_conv, 
+#          interbank_deals.day_count_convention,
+#          repo_trades.day_count_convention
+
+# Step 2: Calculate days and day count base based on DCC
+if dcc == 'ACT/365':
+    days = 1  # Daily accrual
+    day_count_base = 365
+elif dcc == 'ACT/360':
+    days = 1
+    day_count_base = 360
+elif dcc == '30/360':
+    days = 1  # Treat as 1/360th of year
+    day_count_base = 360
+elif dcc == 'ACT/ACT':
+    days = 1
+    day_count_base = 366 if is_leap_year else 365
+
+# Step 3: Calculate daily accrual
+daily_accrued = (nominal_amount × coupon_rate × days) / day_count_base
+
+# Step 4: Cumulative accrued (resets on coupon payment)
 accrued_interest += daily_accrued
 
 # On coupon payment date:
@@ -784,6 +843,12 @@ if today == coupon_payment_date:
     accrued_interest = 0  # Reset for new period
     # Create coupon transaction in bond_transactions
 ```
+
+**Important Notes:**
+- Each bond/transaction has its own `day_count_convention` field
+- System must read the convention from the specific transaction record
+- Do not hardcode 365 - always use the specified convention
+- Floating rate deals may have different conventions than fixed rate
 
 ### 8.3 Periodic Updates
 
@@ -1414,6 +1479,7 @@ if today == coupon_payment_date:
 | 2026-02-03 | 0.2 | Removed Accounting section, merged into Back Office; Updated IT Admin responsibilities | [Name] |
 | 2026-02-03 | 0.3 | Added Appendix A with actual table structures from Excel source file; Updated all field names to match source data | [Name] |
 | 2026-02-03 | 0.4 | Added detailed daily batch process for accrued interest calculation; Clarified Back Office daily ThaiBMA price update responsibility; Added weekend/holiday handling procedures | [Name] |
+| 2026-02-03 | 0.5 | Fixed accrued interest calculation to use day count convention from each transaction (ACT/365, ACT/360, 30/360, ACT/ACT) instead of fixed 365 | [Name] |
 
 ---
 
