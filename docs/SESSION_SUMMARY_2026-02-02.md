@@ -3,7 +3,26 @@
 
 ---
 
-## 📋 Overview
+## � Quick Start (Copy-Paste for Tomorrow)
+
+```bash
+# 1. Start Docker
+cd src/backend
+docker-compose -f docker-compose.local.yml up -d
+
+# 2. Activate venv
+.\venv\Scripts\Activate.ps1
+
+# 3. Start server
+.\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# 4. Open docs
+# http://localhost:8000/docs
+```
+
+---
+
+## �📋 Overview
 
 Today we completed **Sprint 1** and **Sprint 2** of the backend development for the Treasury Management System. The system now has a functional API with master data management and bond trading capabilities.
 
