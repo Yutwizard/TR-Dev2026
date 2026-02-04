@@ -29,6 +29,505 @@
 
 ---
 
+## 0. Pre-Transaction Setup (Prerequisites)
+
+Before any trading can occur, the following setup processes must be completed.
+
+---
+
+## 0.1 New Client/Counterparty Onboarding
+
+### Overview
+Register a new bank or financial institution as a counterparty for trading.
+
+**Participating Teams:** BO → Credit Risk → MO → IT
+
+**Total Time:** 3-5 business days (depending on KYC/KYB complexity)
+
+---
+
+### Step 1: Initial Data Collection (Back Office)
+
+**Responsible:** Back Office Onboarding Team
+
+| # | Action | Fields to Input/Update | Source/Notes |
+|---|--------|------------------------|--------------|
+| 1.1 | 👤 Check entity existence | Search `entity_master` | Avoid duplicates |
+| 1.2 | 👤 Create entity record | `entity_master` | If new entity group |
+| 1.3 | 👤 Input entity details | `entity_name`, `entity_short_name`, `entity_type` | Legal documents |
+| 1.4 | 👤 Input registration | `juristic_registration_number` (13 digits) | นิติบุคคล registration |
+| 1.5 | 👤 Input country | `country_code` | ISO 3166-1 alpha-3 |
+| 1.6 | 👤 Input capital | `registered_capital_amount`, `financials_currency` | Financial statements |
+| 1.7 | ⚙️ System generates | `entity_id` | Format: SHORTNAME+JURISTICID |
+
+**Tables Updated:**
+- `entity_master` - New entity record
+
+---
+
+### Step 2: Counterparty Setup (Back Office)
+
+**Responsible:** Back Office Onboarding Team
+
+| # | Action | Fields to Input/Update | Source/Notes |
+|---|--------|------------------------|--------------|
+| 2.1 | 👤 Link to entity | `entity_id` | FK to entity_master |
+| 2.2 | 👤 Input legal name | `legal_name` | Full legal name |
+| 2.3 | 👤 Input short code | `short_code` | Trading abbreviation (e.g., BBL) |
+| 2.4 | 👤 Select type | `counterparty_type` | Commercial Bank, SOE, Corporate, etc. |
+| 2.5 | 👤 Input BOT code | `bank_code` | From BANK_CODE reference table |
+| 2.6 | 👤 Input SWIFT BIC | `swift_bic` | 8 or 11 characters |
+| 2.7 | 👤 Input ratings | `primary_credit_rating`, `primary_rating_agency`, `primary_rating_date` | Latest ratings |
+| 2.8 | 👤 Select involved party type | `involved_party_type` | BOT classification (e.g., 176039 = Commercial Bank) |
+| 2.9 | 👤 Select customer code | `customer_code` | Internal classification |
+| 2.10 | 👤 Set residency | `reside_in_thailand_flag` | MFSMCG rule |
+| 2.11 | ⚙️ System generates | `counterparty_id` | Auto-generated |
+| 2.12 | ⚙️ System sets | `created_date` | Current date |
+
+**Tables Updated:**
+- `counterparty_master` - New counterparty record
+
+---
+
+### Step 3: Credit Risk Assessment (Credit Risk Team)
+
+**Responsible:** Credit Risk Department
+
+| # | Action | Fields to Input/Update | Notes |
+|---|--------|------------------------|-------|
+| 3.1 | 👤 Review entity type | `entity_type` | Basel classification |
+| 3.2 | 👤 Verify ratings | `primary_credit_rating` | TRIS, Fitch, Moody's |
+| 3.3 | 👤 Assess risk | Internal credit assessment | Risk scoring |
+| 3.4 | 👤 Approve for trading | Credit approval document | Signed approval |
+| 3.5 | 📧 Notify Back Office | - | Ready for limit setup |
+
+**Credit Rating Mapping:**
+| Agency | Field | Update Frequency |
+|--------|-------|------------------|
+| TRIS Rating | `rating_tris` | On rating change |
+| Fitch | `rating_fitch` | On rating change |
+| Primary | `primary_credit_rating` | As needed |
+
+---
+
+### Step 4: Limit Configuration (Middle Office)
+
+**Responsible:** Middle Office Risk Manager
+
+| # | Action | Fields to Input/Update | Notes |
+|---|--------|------------------------|-------|
+| 4.1 | 👤 Define limit types | `limit_type` | PLACEMENT_LIMIT, REPO_LIMIT, etc. |
+| 4.2 | 👤 Input credit line | `total_credit_line` | Approved amount |
+| 4.3 | 👤 Set currency | `currency` | THB |
+| 4.4 | 👤 Set approval date | `credit_line_approve_date` | Committee approval date |
+| 4.5 | ⚙️ System sets | `available_line` = `total_credit_line` | Initially fully available |
+| 4.6 | ⚙️ System generates | `limit_id` | Auto-generated |
+| 4.7 | 🔒 Create record | `limit_utilization` | Immutable audit record |
+
+**Limit Types:**
+| Type | Purpose | Applies To |
+|------|---------|------------|
+| PLACEMENT_LIMIT | Interbank lending | Interbank deals |
+| REPO_LIMIT | Repo trading | Repo trades |
+| SINGLE_TXN | Max single transaction | All trades |
+| AGGREGATE | Total exposure | All products |
+| TENOR | Maximum maturity | All trades |
+| CONCENTRATION | Sector limits | Portfolio level |
+
+**Tables Updated:**
+- `limit_utilization` - New limit record (immutable)
+
+---
+
+### Step 5: Netting Agreement Setup (Back Office - If Repo Trading)
+
+**Responsible:** Back Office Legal/Operations
+
+| # | Action | Fields to Input/Update | Notes |
+|---|--------|------------------------|-------|
+| 5.1 | 👤 Create agreement | `netting_agreement_id` | e.g., GMRA_2023_BBL |
+| 5.2 | 👤 Link counterparty | `counterparty_id` | - |
+| 5.3 | 👤 Select agreement type | `agreement_type` | GMRA, ISDA, CSA |
+| 5.4 | 👤 Select netting type | `netting_type` | CLOSE_OUT, COLLATERAL, SET_OFF |
+| 5.5 | 👤 Set dates | `trade_date` (signature), `value_date` (effective), `maturity_date` (expiry) | - |
+| 5.6 | 👤 Set collateral type | `collateral_contract_type` | REP, BAL, OTC |
+| 5.7 | 👤 Set currency | `settlement_currency` | THB |
+| 5.8 | 👤 Set status | `agreement_status` = 'Active' | - |
+
+**Tables Updated:**
+- `netting_agreement` - New agreement record
+
+---
+
+### Step 6: KYC Completion (Compliance)
+
+**Responsible:** Compliance Team
+
+| # | Action | Fields/Process | Notes |
+|---|--------|----------------|-------|
+| 6.1 | 👤 KYC document collection | - | Legal documents, licenses |
+| 6.2 | ✅ Verify documents | - | Authenticity check |
+| 6.3 | 👤 Set KYC status | KYC status = 'APPROVED' | In `counterparty_master` |
+| 6.4 | 📧 Notify all teams | - | Counterparty ready for trading |
+| 6.5 | ⚙️ System activates | Trading enabled | FO can now select counterparty |
+
+**KYC Status Values:**
+- PENDING = Documents under review
+- APPROVED = Ready for trading
+- REJECTED = Cannot trade
+- SUSPENDED = Temporary halt
+
+**Tables Updated:**
+- `counterparty_master` - KYC status updated
+
+---
+
+## 0.2 New Bond Symbol Setup
+
+### Overview
+Add a new bond/security to the system before it can be traded.
+
+**Participating Teams:** BO → IT (System Config)
+
+**Total Time:** 1-2 business days
+
+---
+
+### Step 1: Security Master Setup (Back Office)
+
+**Responsible:** Back Office Security Master Administrator
+
+| # | Action | Fields to Input/Update | Source/Notes |
+|---|--------|------------------------|--------------|
+| 1.1 | 👤 Input ThaiBMA symbol | `security_id` | Official trading symbol |
+| 1.2 | 👤 Input ISIN | `isin` | ISO 6166 format (TH + 9 digits + check digit) |
+| 1.3 | 👤 Select issuer | `issuer_id` | 1=Govt Thailand, 2=BOT, 3=SOE, 4=Corporate |
+| 1.4 | 👤 Input unique ID | `unique_id` | For BOT reporting (BANK_CODE or Govt Agency code) |
+| 1.5 | 👤 Select instrument | `instrument_type` | T-Bill, Gov Bond, BOT Bond, SOE Bond, Corp Bond |
+| 1.6 | 👤 Input issue date | `issue_date` | Bond issue date |
+| 1.7 | 👤 Input maturity | `maturity_date` | Final redemption date |
+| 1.8 | 👤 Input coupon | `coupon_rate` | Annual coupon % |
+| 1.9 | 👤 Select rate type | `coupon_rate_type` | Fixed or Floating |
+| 1.10 | 👤 If FLOATING | `coupon_margin`, `coupon_reference_rate` | Spread + benchmark |
+| 1.11 | 👤 Select frequency | `coupon_frequency` | Semi-Annual, Quarterly, Annual, At Maturity |
+| 1.12 | 👤 Select day count | `coupon_day_count_conv` | ACT/365, ACT/360, 30/360, ACT/ACT |
+| 1.13 | 👤 Input currency | `currency` | THB |
+| 1.14 | 👤 Input country | `country` | TH |
+| 1.15 | 👤 Select structure | `bond_structure` | Bullet, ZERO, Amortizing |
+| 1.16 | 👤 Input ratings | `rating_tris`, `rating_fitch` | Initial ratings |
+| 1.17 | 👤 Set eligibility | `is_eligible_bot_repo_collateral`, `is_eligible_crm_collateral` | Policy decision |
+| 1.18 | 👤 Set status | `status` = 'Active' | Ready for trading |
+| 1.19 | ⚙️ System sets | `status_timestamp` | Current timestamp |
+
+**Issuer ID Mapping:**
+| ID | Type | Unique ID Source |
+|----|------|------------------|
+| 1 | Government Thailand | Govt Agency code |
+| 2 | Bank of Thailand | BANK_CODE |
+| 3 | SOE (State-Owned Enterprise) | BANK_CODE |
+| 4 | Corporate | - |
+
+**Validation Rules:**
+- ISIN format: TH + 9 digits + check digit
+- Maturity date > Issue date
+- Coupon rate >= 0 (0 for zero-coupon)
+- If Floating: coupon_reference_rate required
+
+**Tables Updated:**
+- `security_master` - New security record
+
+---
+
+### Step 2: Haircut Configuration (Back Office - If Repo Eligible)
+
+**Responsible:** Back Office Collateral Manager
+
+| # | Action | Fields/Process | Notes |
+|---|--------|----------------|-------|
+| 2.1 | 👤 Check BOT haircut table | - | Standard haircut % by rating/tenor |
+| 2.2 | 👤 Configure haircut | `haircut_matrix` | If custom required |
+| 2.3 | ✅ Verify | - | Collateral value calculation test |
+
+**Standard BOT Haircuts:**
+| Collateral Type | 0-5Y | 5-10Y | 10-20Y | >20Y |
+|-----------------|------|-------|--------|------|
+| T-Bills, Gov Bonds | 1.0% | 1.5% | 2.5% | 3.0% |
+| SOE (Gov Guaranteed) | 1.5% | 3.0% | 4.5% | 5.5% |
+| Corporate AAA | 5.0% | 10.0% | 15.0% | 20.0% |
+
+---
+
+### Step 3: System Configuration (IT Admin)
+
+**Responsible:** IT Admin
+
+| # | Action | Fields/Process | Notes |
+|---|--------|----------------|-------|
+| 3.1 | 👤 Configure ThaiBMA API | Security ID mapping | For price feed |
+| 3.2 | 👤 Set up price import | File format mapping | EOD price file |
+| 3.3 | ✅ Test connection | - | Verify price retrieval |
+| 3.4 | 👤 Enable in trading | - | Available for trade entry |
+
+**Tables Updated:**
+- Reference data tables (if new issuer type)
+
+---
+
+### Step 4: Initial Price Import (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Fields to Update | Source |
+|---|--------|------------------|--------|
+| 4.1 | 👤 Obtain first price | - | ThaiBMA or prospectus |
+| 4.2 | 👤 Input initial price | `clean_price` (in `bond_positions` via daily process) | Issue price |
+| 4.3 | ⚙️ System calculates | `accrued_interest` | From issue date |
+| 4.4 | ✅ Verify | All calculations | Sanity check |
+
+**Note:** After setup, daily ThaiBMA EOD prices will update automatically.
+
+---
+
+## 0.3 Market Data Management
+
+### Overview
+Daily management of market data for floating rate calculations and mark-to-market valuation.
+
+**Participating Teams:** BO (Primary) + IT (Support)
+
+---
+
+## 0.3.1 Index Rate Upload (THOR, THORA, SOFR, etc.)
+
+### Purpose
+Provide reference rates for floating rate instruments (interbank deals and repos).
+
+**Source:** ThaiBMA, BOT, or international rate providers
+
+---
+
+### Step 1: Daily Rate Download (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Fields/Process | Timing |
+|---|--------|----------------|--------|
+| 1.1 | 👤 Download THOR | ThaiBMA website/API | Daily ~11:00 AM |
+| 1.2 | 👤 Download THORA | ThaiBMA website | Daily ~11:00 AM |
+| 1.3 | 👤 Check SOFR (if needed) | Bloomberg/Reuters | If USD trades |
+| 1.4 | 👤 Verify rate | Check against previous day | ±50bp threshold |
+| 1.5 | ✅ Validate | Rate reasonableness | Flag if anomalous |
+
+**THOR Tenors:**
+| Tenor | Description | Usage |
+|-------|-------------|-------|
+| O/N | Overnight | Short-term deals |
+| 1W | 1 Week | - |
+| 1M | 1 Month | Most common |
+| 3M | 3 Months | - |
+| 6M | 6 Months | - |
+
+---
+
+### Step 2: Rate Import (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Fields to Update | Process |
+|---|--------|------------------|---------|
+| 2.1 | 👤 Import rates | `interbank_interest_schedule.reset_rate` | Input THOR fixing |
+| 2.2 | ⚙️ System updates | `interbank_interest_schedule.interest_rate` | Reset + Margin |
+| 2.3 | ⚙️ System updates | `interbank_deals.interest_rate` | For floating deals |
+| 2.4 | ⚙️ System updates | `interbank_deals.last_reset_date`, `next_reset_date` | Roll forward |
+| 2.5 | ⚙️ If repo floating | `repo_trades.interest_rate` | Update repo rates |
+
+**Floating Rate Reset Formula:**
+```
+New Interest Rate = Reset Rate (THOR) + Margin
+```
+
+**Tables Updated:**
+- `interbank_interest_schedule` - Reset rates
+- `interbank_deals` - Current interest rate (floating)
+- `repo_trades` - Current interest rate (floating)
+
+---
+
+### Step 3: Rate Reset Notification (System)
+
+**Responsible:** System (Automatic)
+
+| # | Action | Process | Notification |
+|---|--------|---------|--------------|
+| 3.1 | ⚙️ Identify reset dates | Check `next_reset_date` = today | - |
+| 3.2 | ⚙️ Calculate new rate | Apply new THOR + margin | - |
+| 3.3 | 📧 Notify Front Office | - | Rate change alert |
+| 3.4 | 📧 Notify affected counterparties | - | As per agreement |
+
+---
+
+## 0.3.2 Bond Mark-to-Market Price Upload
+
+### Purpose
+Daily update of bond prices for valuation, collateral management, and regulatory reporting.
+
+**Source:** ThaiBMA EOD (End-of-Day) price file
+
+**Critical Path:** Must complete before 18:00 batch calculation
+
+---
+
+### Step 1: Download ThaiBMA EOD File (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Process | Timing |
+|---|--------|---------|--------|
+| 1.1 | 👤 Login to ThaiBMA portal | https://www.thaibma.or.th | 17:00 daily |
+| 1.2 | 👤 Navigate to EOD prices | Market Data → EOD Prices | - |
+| 1.3 | 👤 Download file | Filename: THAIBMA_MTM_YYYYMMDD.csv | - |
+| 1.4 | 👤 Save to designated folder | Network drive/SFTP location | For system pickup |
+
+**File Format (CSV):**
+| Column | Description | Example |
+|--------|-------------|---------|
+| Security_ID | ThaiBMA symbol | LB28DA |
+| ISIN | ISIN code | TH0623038C09 |
+| Clean_Price | EOD clean price % | 101.25 |
+| Accrued_Interest | Accrued interest % | 2.15 |
+| Yield | Yield to maturity % | 2.35 |
+
+---
+
+### Step 2: File Validation (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Validation | Threshold |
+|--------|--------|------------|-----------|
+| 2.1 | ✅ Check completeness | All active securities present | 100% coverage |
+| 2.2 | ✅ Check price movements | Compare to previous day | ±5% warning, ±10% alert |
+| 2.3 | ✅ Check for zero/null prices | Price > 0 | Flag missing |
+| 2.4 | ✅ Check file date | File date = Today | Correct trading date |
+| 2.5 | 👤 Handle exceptions | Manual price lookup if missing | Use last available |
+
+**Price Validation Rules:**
+| Movement | Action | Approval Required |
+|----------|--------|-------------------|
+| ±5% to ±10% | Warning flag | No |
+| ±10% to ±20% | Alert + require confirmation | Middle Office |
+| > ±20% | Hard stop + investigation | Risk Manager |
+| Stale (>1 day) | Warning + use last price | Back Office |
+
+**Exception Handling:**
+- Missing price: Use last available + alert
+- Zero price: Manual input required
+- Suspect price: Verify with ThaiBMA
+
+---
+
+### Step 3: Price Import to System (Back Office)
+
+**Responsible:** Back Office Market Data
+
+| # | Action | Fields to Update | Process |
+|---|--------|------------------|---------|
+| 3.1 | 👤 Import via system function | "Market Data Upload" | UI or API |
+| 3.2 | ⚙️ System validates | File format, price ranges | Auto-check |
+| 3.3 | ⚙️ System updates | `bond_positions.clean_price` | For MTM |
+| 3.4 | ⚙️ System updates | `bond_positions.market_rate` | ThaiBMA yield |
+| 3.5 | ⚙️ System updates | `collateral_positions.valuation_price` | Collateral MTM |
+| 3.6 | ⚙️ System logs | Import audit trail | Timestamp + user |
+
+**Tables Updated:**
+- `bond_positions` - `clean_price`, `market_rate`
+- `collateral_positions` - `valuation_price`
+
+---
+
+### Step 4: Trigger EOD Batch (System)
+
+**Responsible:** System (Automatic at 18:00)
+
+| # | Action | Fields Updated | Calculation |
+|---|--------|----------------|-------------|
+| 4.1 | ⚙️ Calculate accrued interest | `bond_positions.accrued_interest` | Daily accrual |
+| 4.2 | ⚙️ Calculate dirty price | `bond_positions.dirty_price` | Clean + Accrued |
+| 4.3 | ⚙️ Calculate market value | `bond_positions.market_value` | (Price × Nom/100) + Accrued |
+| 4.4 | ⚙️ Calculate unrealized P&L | `bond_positions.unrealized_gain_loss` | Market - Book |
+| 4.5 | ⚙️ Update collateral values | `collateral_positions.market_value` | New price × Nominal |
+| 4.6 | ⚙️ Recalculate margin | `collateral_value_after_haircut` | Apply haircut |
+| 4.7 | ⚙️ Check margin calls | `margin_calls` | If threshold breached |
+
+**Daily Batch Schedule:**
+| Time | Process | Duration |
+|------|---------|----------|
+| 17:00 | ThaiBMA download | 15 min |
+| 17:15 | Validation | 10 min |
+| 17:30 | Import prices | 10 min |
+| 18:00 | Accrued interest calc | 20 min |
+| 18:30 | Position build | 30 min |
+| 19:00 | MTM valuation | 15 min |
+| 19:30 | Journal generation | 15 min |
+
+**Tables Updated:**
+- `bond_positions` - Accrued, market value, unrealized P&L
+- `collateral_positions` - Market value, collateral value
+- `margin_calls` - If margin threshold breached
+
+---
+
+### Step 5: Verification & Exception Handling (Back Office)
+
+**Responsible:** Back Office Market Data + Accounting
+
+| # | Action | Process | Timing |
+|---|--------|---------|--------|
+| 5.1 | 👤 Verify calculations | Check `bond_positions` | 18:30 |
+| 5.2 | 👤 Review exceptions | Stale prices, missing data | 19:00 |
+| 5.3 | 👤 Confirm GL posting | Accrual journals | 19:30 |
+| 5.4 | 👤 Sign off | Daily market data report | EOD |
+
+**Exception Report Contents:**
+- Securities with stale prices (>1 day)
+- Price movements exceeding thresholds
+- Missing prices (manual input required)
+- Calculation errors
+
+---
+
+## 0.4 Summary: Pre-Transaction Checklist
+
+Before executing any trade, verify:
+
+### Client/Counterparty Checklist
+| # | Item | Check | Responsible |
+|---|------|-------|-------------|
+| 1 | Entity exists in `entity_master` | ✅ | BO |
+| 2 | Counterparty exists in `counterparty_master` | ✅ | BO |
+| 3 | KYC status = 'APPROVED' | ✅ | Compliance |
+| 4 | Credit limit configured | ✅ | MO |
+| 5 | Available limit > trade amount | ✅ | System |
+| 6 | Netting agreement (if repo) | ✅ | BO |
+
+### Bond/Security Checklist
+| # | Item | Check | Responsible |
+|---|------|-------|-------------|
+| 1 | Security exists in `security_master` | ✅ | BO |
+| 2 | Status = 'Active' | ✅ | BO |
+| 3 | Current price available | ✅ | BO/System |
+| 4 | Haircut configured (if repo eligible) | ✅ | BO |
+
+### Market Data Checklist
+| # | Item | Check | Responsible |
+|---|------|-------|-------------|
+| 1 | ThaiBMA prices imported today | ✅ | BO |
+| 2 | Index rates updated (if floating) | ✅ | BO |
+| 3 | No critical exceptions | ✅ | BO |
+| 4 | EOD batch completed successfully | ✅ | System/BO |
+
+---
+
 ## 1. Bond Trade - Buy/Sell
 
 ### Overview
