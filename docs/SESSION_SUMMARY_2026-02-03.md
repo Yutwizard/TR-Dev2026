@@ -208,7 +208,7 @@ CANCELLED REJECTED   FAILED
 | `d23ae57` | docs: Add comprehensive Transaction Process Guide with step-by-step workflows | 1 file (+729 lines) |
 
 **Total Changes:**
-- 4 new documents created (Field Matrix, Checklist, Process Guide with updates)
+- 5 new documents created
 - 1 extraction script added
 - 2 existing files updated with cross-references
 - 1 major document update (Pre-Transaction Setup added to Process Guide)
@@ -224,7 +224,8 @@ docs/
 ├── Treasury_System_Detailed_Design_Input.md    # Comprehensive design document (65KB)
 ├── Field_Update_Matrix.md                       # Field-by-field update reference (35KB)
 ├── STAKEHOLDER_REVIEW_CHECKLIST.md              # Stakeholder sign-off checklist (13KB)
-├── TRANSACTION_PROCESS_GUIDE.md                 # NEW: Step-by-step workflows (31KB)
+├── TRANSACTION_PROCESS_GUIDE.md                 # Step-by-step workflows (42KB)
+└── PRE_TRANSACTION_SETUP_GUIDE.md               # NEW: Client/Bond setup guide (14KB)
 
 data/extracted/
 └── table_structures.md                          # Auto-extracted table definitions
@@ -251,6 +252,7 @@ docs/
 | Field_Update_Matrix.md | ~673 | 7 | 18 tables (+ update rules) |
 | STAKEHOLDER_REVIEW_CHECKLIST.md | ~353 | 8 | Review sections |
 | TRANSACTION_PROCESS_GUIDE.md | ~1,228 | 7 | 4 pre-setup + 3 transactions + events |
+| PRE_TRANSACTION_SETUP_GUIDE.md | ~474 | 2 | Client Onboarding + Bond Setup |
 
 **Sections in Detailed Design Input:**
 1. Team Responsibilities Overview
@@ -274,8 +276,18 @@ docs/
 6. Summary by Update Frequency
 7. Special Update Scenarios (5 scenarios)
 
+**Standalone Pre-Transaction Setup Guide (NEW):**
+- **Document:** `PRE_TRANSACTION_SETUP_GUIDE.md` (14KB, 474 lines)
+- **Purpose:** Focused guide for team discussions
+- **Target Audience:** Operations, Credit Risk, Compliance, IT
+- **Content:**
+  - Part A: Client Onboarding (6 steps with approval levels)
+  - Part B: Bond Setup (4 steps with validation rules)
+  - Team responsibility tables
+  - Ready-to-use checklists
+
 **Sections in Transaction Process Guide:**
-1. **Pre-Transaction Setup** (NEW)
+1. **Pre-Transaction Setup** (Also documented here)
    - 0.1 New Client/Counterparty Onboarding (6 steps: Entity → Counterparty → Credit Risk → Limit → Netting → KYC)
    - 0.2 New Bond Symbol Setup (4 steps: Security Master → Haircut → System Config → Initial Price)
    - 0.3 Market Data Management
