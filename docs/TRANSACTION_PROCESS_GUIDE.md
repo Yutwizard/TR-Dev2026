@@ -381,12 +381,14 @@ Daily update of bond prices for valuation, collateral management, and regulatory
 
 **Responsible:** Back Office Market Data
 
-| # | Action | Process | Timing |
-|---|--------|---------|--------|
-| 1.1 | 👤 Login to ThaiBMA portal | https://www.thaibma.or.th | 17:00 daily |
-| 1.2 | 👤 Navigate to EOD prices | Market Data → EOD Prices | - |
-| 1.3 | 👤 Download file | Filename: THAIBMA_MTM_YYYYMMDD.csv | - |
-| 1.4 | 👤 Save to designated folder | Network drive/SFTP location | For system pickup |
+| # | Action | Process | Normal Day | Month-End Day |
+|---|--------|---------|------------|---------------|
+| 1.1 | 👤 Login to ThaiBMA portal | https://www.thaibma.or.th | 17:00 | 17:30 - 18:00 |
+| 1.2 | 👤 Navigate to EOD prices | Market Data → EOD Prices | - | - |
+| 1.3 | 👤 Download file | Filename: THAIBMA_MTM_YYYYMMDD.csv | - | - |
+| 1.4 | 👤 Save to designated folder | Network drive/SFTP location | For system pickup | For system pickup |
+
+> **⚠️ Month-End Note:** ThaiBMA typically releases month-end prices later due to increased volume and month-end reconciliation. Back Office should monitor portal and download as soon as available (usually 17:30 - 18:00).
 
 **File Format (CSV):**
 | Column | Description | Example |

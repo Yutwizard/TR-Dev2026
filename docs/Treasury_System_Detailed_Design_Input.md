@@ -291,6 +291,8 @@ Step 4: System updates settlement_status on confirmation
 
 #### Back Office Daily Price Update Procedure:
 
+##### Normal Working Day Schedule
+
 **Step 1: Download (17:00)**
 - Log into ThaiBMA portal (https://www.thaibma.or.th)
 - Download EOD price file (MTM data)
@@ -314,6 +316,30 @@ Step 4: System updates settlement_status on confirmation
 - Check `bond_positions.accrued_interest` updated
 - Verify `bond_positions.market_value` recalculated
 - Review exception reports
+
+##### Month-End Day Schedule (Adjusted)
+
+> **⚠️ Important:** ThaiBMA typically releases month-end EOD prices later than normal days (usually between 17:30 - 18:00) due to:
+> - Higher trading volume requiring additional processing time
+> - Month-end reconciliation and reporting activities
+> - Additional validation requirements
+
+**Adjusted Timeline:**
+
+| Step | Normal Day | Month-End Day | Action |
+|------|------------|---------------|--------|
+| Download | 17:00 | 17:30 - 18:00 | Monitor portal closely |
+| Validate | 17:15 | 18:00 - 18:15 | Price validation |
+| Import | 17:30 | 18:15 - 18:30 | Import to system |
+| Batch | 18:00 | 18:30 | Start calculation |
+| Verify | 18:30 | 18:50 | Check results |
+| Complete | 19:30 | 19:50 | GL posting done |
+
+**Month-End Actions Required:**
+- Back Office must monitor ThaiBMA portal from 17:30 onwards
+- Download file as soon as available (do not wait)
+- Notify accounting team of potential 20-30 minute delay in GL completion
+- Complete processing target: 19:50 (vs. 19:30 on normal days)
 
 #### Portfolio Master Updates (IT Admin Responsibility):
 
@@ -681,13 +707,15 @@ CANCELLED                      FAILED    MARGIN_CALL (if needed)
 
 **Critical Daily Process (Working Days Only):**
 
-| Step | Process | Responsible | System Action | Timing |
-|------|---------|-------------|---------------|--------|
-| **1** | **Import ThaiBMA Prices** | Back Office | Download/Import ThaiBMA EOD prices | 17:00 - 18:00 |
-| **2** | **Update Security Master** | Back Office | Update `security_master` with latest prices | 18:00 |
-| **3** | **Calculate Accrued Interest** | System (Batch) | Calculate daily accrued interest for all positions | 18:30 |
-| **4** | **Update Positions** | System (Batch) | Update `bond_positions.accrued_interest`, `market_value` | 19:00 |
-| **5** | **Update Collateral** | System (Batch) | Update `collateral_positions.market_value` | 19:00 |
+| Step | Process | Responsible | System Action | Normal Day | Month-End Day |
+|------|---------|-------------|---------------|------------|---------------|
+| **1** | **Import ThaiBMA Prices** | Back Office | Download/Import ThaiBMA EOD prices | 17:00 - 17:30 | 17:30 - 18:15 |
+| **2** | **Update Security Master** | Back Office | Update `security_master` with latest prices | 17:30 | 18:15 |
+| **3** | **Calculate Accrued Interest** | System (Batch) | Calculate daily accrued interest for all positions | 18:00 | 18:30 |
+| **4** | **Update Positions** | System (Batch) | Update `bond_positions.accrued_interest`, `market_value` | 18:30 | 18:50 |
+| **5** | **Update Collateral** | System (Batch) | Update `collateral_positions.market_value` | 19:00 | 19:20 |
+
+> **Note:** Month-end dates typically have later ThaiBMA releases due to higher volume and reconciliation activities. Back Office should monitor the portal closely on month-end days.
 
 #### Price Input from ThaiBMA (Back Office Daily Task):
 
@@ -700,6 +728,7 @@ CANCELLED                      FAILED    MARGIN_CALL (if needed)
 
 #### Back Office Daily Checklist (Working Days):
 
+**Normal Day Checklist:**
 ```
 □ 17:00 - Download ThaiBMA EOD price file from ThaiBMA portal
 □ 17:15 - Validate price file completeness (all active securities)
@@ -709,6 +738,19 @@ CANCELLED                      FAILED    MARGIN_CALL (if needed)
 □ 18:30 - Verify accrued interest calculations completed
 □ 19:00 - Verify position valuations updated correctly
 □ 19:15 - Review exception reports (stale prices, missing data)
+```
+
+**Month-End Day Checklist:**
+```
+□ 17:30 - 18:00 - MONITOR ThaiBMA portal (release typically later)
+□ 18:00 - Download ThaiBMA EOD price file (as soon as available)
+□ 18:15 - Validate price file completeness (all active securities)
+□ 18:30 - Import prices into security_master
+□ 18:45 - Verify price reasonableness (±5% threshold check)
+□ 18:50 - Trigger EOD batch jobs (delayed start)
+□ 19:20 - Verify accrued interest calculations completed
+□ 19:35 - Verify position valuations updated correctly
+□ 19:50 - Review exception reports, notify Accounting of completion
 ```
 
 #### Accrued Interest Calculation (System Batch):
