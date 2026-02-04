@@ -136,18 +136,58 @@ CANCELLED REJECTED   FAILED
 
 ---
 
-### 6. Git Commits
+### 6. Created Transaction Process Guide
+
+**New Document:** `docs/TRANSACTION_PROCESS_GUIDE.md` (31KB, 729 lines)
+
+**Purpose:** Step-by-step workflow for all transaction types with responsible teams and field updates.
+
+**Content Coverage:**
+| Transaction Type | Steps | Key Topics |
+|------------------|-------|------------|
+| **Bond Trade** | 8 steps | Entry, Limit Check, Approval, ThaiBMA Reporting, Settlement, Position Update, Daily Batch |
+| **Interbank Deal** | 5 steps | Entry, Approval, Settlement, Daily Accrual, Maturity |
+| **Repo Trade** | 9 steps | Entry, Approval, Collateral Allocation, Settlement, Daily Margin, Margin Call Workflow, Substitution, Accrual, Maturity |
+| **Scheduled Events** | 2 processes | Coupon Payment (auto-detect → Reset accrued → Create transaction), Bond Maturity (auto-detect → Archive → GL) |
+
+**Process Documentation Format:**
+| Element | Description |
+|---------|-------------|
+| Step Number | Sequential within each transaction |
+| Icon | 👤 Manual, ⚙️ System, ✅ Validation, 📧 Notification, 🔒 Immutable |
+| Action | What happens at this step |
+| Fields to Update | Specific field names from Field Update Matrix |
+| Validation | Business rules and checks |
+| Tables Updated | Database tables affected |
+
+**Team Actions Summary:**
+- **Front Office:** Trade entry (all products), portfolio selection, price input
+- **Middle Office:** Four-eyes approval (all trades), margin call agreement
+- **Back Office:** Settlement confirmation, collateral allocation, ThaiBMA import, maturity processing
+- **System:** Daily batch (18:00), margin calculation (17:00), scheduled events
+
+**Visual Diagrams:**
+- Bond Trade full lifecycle flowchart
+- Repo Trade with margin call workflow
+
+---
+
+### 7. Git Commits
 
 | Commit | Message | Files Changed |
 |--------|---------|---------------|
 | `7c87d07` | docs: Add detailed design input document with team responsibilities and table structures | 4 files (+1958 lines) |
 | `fc2e69c` | docs: Update accrued interest calculation to use day count convention from each transaction | 1 file (+84/-18 lines) |
-| `[pending]` | docs: Add Field Update Matrix with field-by-field update details | 2 files (+673 lines, +2 refs) |
+| `aea591a` | docs: Add Field Update Matrix with field-by-field update details | 2 files (+673 lines) |
+| `570fd99` | docs: Add Stakeholder Review Checklist for design validation | 1 file (+353 lines) |
+| `9b645da` | docs: Change Security Master ownership from IT Admin to Back Office | 3 files (+44/-32 lines) |
+| `d23ae57` | docs: Add comprehensive Transaction Process Guide with step-by-step workflows | 1 file (+729 lines) |
 
 **Total Changes:**
-- 3 new documents created
+- 4 new documents created
 - 1 extraction script added
 - 2 existing files updated with cross-references
+- 1 document updated (Security Master ownership change)
 
 ---
 
@@ -157,7 +197,9 @@ CANCELLED REJECTED   FAILED
 ```
 docs/
 ├── Treasury_System_Detailed_Design_Input.md    # Comprehensive design document (65KB)
-├── Field_Update_Matrix.md                       # NEW: Field-by-field update reference (35KB)
+├── Field_Update_Matrix.md                       # Field-by-field update reference (35KB)
+├── STAKEHOLDER_REVIEW_CHECKLIST.md              # Stakeholder sign-off checklist (13KB)
+├── TRANSACTION_PROCESS_GUIDE.md                 # NEW: Step-by-step workflows (31KB)
 
 data/extracted/
 └── table_structures.md                          # Auto-extracted table definitions
@@ -170,18 +212,20 @@ scripts/
 ```
 docs/
 ├── SESSION_SUMMARY_2026-02-02.md               # Added quick start commands
-├── Treasury_System_Detailed_Design_Input.md    # Added Field Update Matrix links
-└── SESSION_SUMMARY_2026-02-03.md               # This file - updated with Matrix details
+├── Treasury_System_Detailed_Design_Input.md    # Added Field Update Matrix links, Security Master ownership
+└── SESSION_SUMMARY_2026-02-03.md               # This file - updated with all new documents
 ```
 
 ---
 
 ## 📊 Document Statistics
 
-| Document | Lines | Sections | Tables Documented |
+| Document | Lines | Sections | Tables/Processes |
 |----------|-------|----------|-------------------|
-| Treasury_System_Detailed_Design_Input.md | ~1,400 | 11 | 18 |
-| Field_Update_Matrix.md | ~673 | 7 | 18 (+ update rules) |
+| Treasury_System_Detailed_Design_Input.md | ~1,400 | 11 | 18 tables |
+| Field_Update_Matrix.md | ~673 | 7 | 18 tables (+ update rules) |
+| STAKEHOLDER_REVIEW_CHECKLIST.md | ~353 | 8 | Review sections |
+| TRANSACTION_PROCESS_GUIDE.md | ~729 | 6 | 3 transactions + events |
 
 **Sections in Detailed Design Input:**
 1. Team Responsibilities Overview
@@ -204,6 +248,14 @@ docs/
 5. Control & Risk Tables (4 tables)
 6. Summary by Update Frequency
 7. Special Update Scenarios (5 scenarios)
+
+**Sections in Transaction Process Guide:**
+1. Bond Trade - Buy/Sell (8 steps)
+2. Interbank Deal - Lending/Borrowing (5 steps)
+3. Repo Trade - Repo/Reverse Repo (9 steps)
+4. Scheduled Events (Coupon Payment, Bond Maturity)
+5. Summary Tables by Team
+6. Process Flow Diagrams
 
 ---
 
@@ -294,6 +346,8 @@ The bank's existing **Risk/Finance system** (e.g., Moody's Analytics, SAS, or in
 |----------|---------|----------|
 | **Treasury_System_Detailed_Design_Input.md** | Main design reference with team responsibilities | `docs/` |
 | **Field_Update_Matrix.md** | Field-by-field update timing and scenarios | `docs/` |
+| **STAKEHOLDER_REVIEW_CHECKLIST.md** | Stakeholder sign-off and review tracking | `docs/` |
+| **TRANSACTION_PROCESS_GUIDE.md** | Step-by-step transaction workflows | `docs/` |
 | **table_structures.md** | Extracted table definitions | `data/extracted/` |
 | **SESSION_SUMMARY_2026-02-02.md** | Yesterday's progress | `docs/` |
 | **Condensed_Development_Plan.md** | 10-week sprint plan | `docs/architecture/` |
@@ -303,8 +357,14 @@ The bank's existing **Risk/Finance system** (e.g., Moody's Analytics, SAS, or in
 ```
 Treasury_System_Detailed_Design_Input.md (main)
     ├── Links to → Field_Update_Matrix.md (field updates)
+    ├── Links to → STAKEHOLDER_REVIEW_CHECKLIST.md (review process)
+    ├── Links to → TRANSACTION_PROCESS_GUIDE.md (workflows)
     ├── Links to → table_structures.md (extracted data)
     └── References → All architecture docs
+
+TRANSACTION_PROCESS_GUIDE.md (workflows)
+    ├── References → Field_Update_Matrix.md (field details)
+    └── References → Detailed Design (team responsibilities)
 ```
 
 ---
