@@ -138,11 +138,21 @@ CANCELLED REJECTED   FAILED
 
 ### 6. Created Transaction Process Guide
 
-**New Document:** `docs/TRANSACTION_PROCESS_GUIDE.md` (31KB, 729 lines)
+**New Document:** `docs/TRANSACTION_PROCESS_GUIDE.md` (42KB, 1,228 lines)
 
 **Purpose:** Step-by-step workflow for all transaction types with responsible teams and field updates.
 
 **Content Coverage:**
+
+#### Pre-Transaction Setup (NEW - Critical Prerequisites)
+| Process | Steps | Key Topics |
+|---------|-------|------------|
+| **New Client Onboarding** | 6 steps | Entity → Counterparty → Credit Risk → Limit → Netting → KYC |
+| **New Bond Setup** | 4 steps | Security Master → Haircut → System Config → Initial Price |
+| **Index Rate Upload** | 3 steps | THOR/THORA download → Validation → Reset processing |
+| **Bond MTM Price Upload** | 5 steps | ThaiBMA EOD (17:00) → Validation → Import → Batch (18:00) |
+
+#### Transaction Execution
 | Transaction Type | Steps | Key Topics |
 |------------------|-------|------------|
 | **Bond Trade** | 8 steps | Entry, Limit Check, Approval, ThaiBMA Reporting, Settlement, Position Update, Daily Batch |
@@ -150,21 +160,35 @@ CANCELLED REJECTED   FAILED
 | **Repo Trade** | 9 steps | Entry, Approval, Collateral Allocation, Settlement, Daily Margin, Margin Call Workflow, Substitution, Accrual, Maturity |
 | **Scheduled Events** | 2 processes | Coupon Payment (auto-detect → Reset accrued → Create transaction), Bond Maturity (auto-detect → Archive → GL) |
 
+**Market Data Management (NEW):**
+- **Daily Schedule:** 17:00 ThaiBMA download → 18:00 Accrued calc → 19:00 MTM → 19:30 GL
+- **Price Validation:** ±5% warning, ±10% alert, ±20% hard stop
+- **Index Rates:** THOR O/N, 1M, 3M, 6M for floating rate reset
+- **Critical Path:** Prices must be imported before 18:00 batch
+
 **Process Documentation Format:**
 | Element | Description |
 |---------|-------------|
-| Step Number | Sequential within each transaction |
+| Step Number | Sequential within each process |
 | Icon | 👤 Manual, ⚙️ System, ✅ Validation, 📧 Notification, 🔒 Immutable |
 | Action | What happens at this step |
-| Fields to Update | Specific field names from Field Update Matrix |
-| Validation | Business rules and checks |
+| Fields to Update | Specific field names with table references |
+| Validation | Business rules, thresholds, approval requirements |
 | Tables Updated | Database tables affected |
+
+**Pre-Transaction Checklist (NEW):**
+- ✅ Client: Entity → Counterparty → KYC approved → Limit configured
+- ✅ Bond: Security master → Active status → Price available → Haircut configured
+- ✅ Market Data: ThaiBMA prices imported → No exceptions → EOD batch complete
 
 **Team Actions Summary:**
 - **Front Office:** Trade entry (all products), portfolio selection, price input
-- **Middle Office:** Four-eyes approval (all trades), margin call agreement
-- **Back Office:** Settlement confirmation, collateral allocation, ThaiBMA import, maturity processing
-- **System:** Daily batch (18:00), margin calculation (17:00), scheduled events
+- **Middle Office:** Four-eyes approval, limit configuration, margin call agreement
+- **Back Office:** **Security Master setup**, **client onboarding**, **daily ThaiBMA import (17:00)**, settlement, collateral, maturity processing
+- **Credit Risk:** Entity type assessment, rating verification, approval
+- **Compliance:** KYC document review, status approval
+- **IT Admin:** System configuration, ThaiBMA API setup, technical support
+- **System:** Daily batch (18:00), margin calculation (17:00), scheduled events, rate reset processing
 
 **Visual Diagrams:**
 - Bond Trade full lifecycle flowchart
@@ -184,9 +208,10 @@ CANCELLED REJECTED   FAILED
 | `d23ae57` | docs: Add comprehensive Transaction Process Guide with step-by-step workflows | 1 file (+729 lines) |
 
 **Total Changes:**
-- 4 new documents created
+- 4 new documents created (Field Matrix, Checklist, Process Guide with updates)
 - 1 extraction script added
 - 2 existing files updated with cross-references
+- 1 major document update (Pre-Transaction Setup added to Process Guide)
 - 1 document updated (Security Master ownership change)
 
 ---
@@ -225,7 +250,7 @@ docs/
 | Treasury_System_Detailed_Design_Input.md | ~1,400 | 11 | 18 tables |
 | Field_Update_Matrix.md | ~673 | 7 | 18 tables (+ update rules) |
 | STAKEHOLDER_REVIEW_CHECKLIST.md | ~353 | 8 | Review sections |
-| TRANSACTION_PROCESS_GUIDE.md | ~729 | 6 | 3 transactions + events |
+| TRANSACTION_PROCESS_GUIDE.md | ~1,228 | 7 | 4 pre-setup + 3 transactions + events |
 
 **Sections in Detailed Design Input:**
 1. Team Responsibilities Overview
@@ -250,12 +275,19 @@ docs/
 7. Special Update Scenarios (5 scenarios)
 
 **Sections in Transaction Process Guide:**
-1. Bond Trade - Buy/Sell (8 steps)
-2. Interbank Deal - Lending/Borrowing (5 steps)
-3. Repo Trade - Repo/Reverse Repo (9 steps)
-4. Scheduled Events (Coupon Payment, Bond Maturity)
-5. Summary Tables by Team
-6. Process Flow Diagrams
+1. **Pre-Transaction Setup** (NEW)
+   - 0.1 New Client/Counterparty Onboarding (6 steps: Entity → Counterparty → Credit Risk → Limit → Netting → KYC)
+   - 0.2 New Bond Symbol Setup (4 steps: Security Master → Haircut → System Config → Initial Price)
+   - 0.3 Market Data Management
+     - 0.3.1 Index Rate Upload (THOR/THORA for floating rates)
+     - 0.3.2 Bond MTM Price Upload (ThaiBMA EOD workflow)
+   - 0.4 Pre-Transaction Checklist
+2. Bond Trade - Buy/Sell (8 steps)
+3. Interbank Deal - Lending/Borrowing (5 steps)
+4. Repo Trade - Repo/Reverse Repo (9 steps)
+5. Scheduled Events (Coupon Payment, Bond Maturity)
+6. Summary Tables by Team
+7. Process Flow Diagrams
 
 ---
 
