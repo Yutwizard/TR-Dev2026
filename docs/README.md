@@ -22,6 +22,9 @@
 | Document | Purpose |
 |----------|---------|
 | [Transaction Workflows](./02-PROCESSES/TRANSACTION_WORKFLOWS.md) | Step-by-step transaction processes |
+| [Field Workflow Mapping](./02-PROCESSES/FIELD_WORKFLOW_MAPPING.md) | Database fields mapped to workflow steps |
+| [Transaction Flow Diagrams](./02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md) | Visual process flow diagrams |
+| [📊 Transaction Flow Portal](./02-PROCESSES/transaction_flow.html) | **Interactive** visual portal (open in browser) |
 | [Pre-Transaction Setup](./02-PROCESSES/PRE_TRANSACTION_SETUP.md) | Client onboarding, bond setup |
 | [Daily Operations](./04-OPERATIONS/DAILY_OPERATIONS.md) | Daily batch procedures |
 
@@ -46,6 +49,9 @@ docs/
 │
 ├── 02-PROCESSES/                ← Business process docs
 │   ├── TRANSACTION_WORKFLOWS.md ← Transaction steps
+│   ├── FIELD_WORKFLOW_MAPPING.md ← Field-to-workflow mapping
+│   ├── TRANSACTION_FLOW_DIAGRAMS.md ← Visual flow diagrams
+│   ├── transaction_flow.html      ← Interactive portal
 │   └── PRE_TRANSACTION_SETUP.md ← Setup procedures
 │
 ├── 03-IMPLEMENTATION/           ← Developer docs
@@ -68,6 +74,7 @@ docs/
 | System Design | ✅ Current | Feb 5, 2026 |
 | Field Reference | ✅ Current | Feb 5, 2026 |
 | Transaction Workflows | ✅ Current | Feb 5, 2026 |
+| Field Workflow Mapping | ✅ Current | Feb 5, 2026 |
 | Pre-Transaction Setup | ✅ Current | Feb 5, 2026 |
 | Development Guide | ✅ Current | Feb 5, 2026 |
 | Setup Instructions | ⚠️ Verify | Feb 5, 2026 |

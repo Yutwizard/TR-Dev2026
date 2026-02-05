@@ -7,7 +7,7 @@
 - [Treasury System Detailed Design Input](./Treasury_System_Detailed_Design_Input.md) - Team responsibilities
 - [Stakeholder Review Checklist](./STAKEHOLDER_REVIEW_CHECKLIST.md) - Approval requirements
 
-**Last Updated:** February 3, 2026
+**Last Updated:** February 5, 2026
 
 ---
 
@@ -58,7 +58,11 @@ Register a new bank or financial institution as a counterparty for trading.
 | 1.4 | 👤 Input registration | `juristic_registration_number` (13 digits) | นิติบุคคล registration |
 | 1.5 | 👤 Input country | `country_code` | ISO 3166-1 alpha-3 |
 | 1.6 | 👤 Input capital | `registered_capital_amount`, `financials_currency` | Financial statements |
-| 1.7 | ⚙️ System generates | `entity_id` | Format: SHORTNAME+JURISTICID |
+| 1.7 | 👤 Input industry sector | `industry_sector` | Moody’s INDUSTRY_SECTOR |
+| 1.8 | 👤 Input G-SIB/D-SIB type | `g_sib_type` | G, D, or NULL |
+| 1.9 | ⚙️ System generates | `entity_id` | Format: SHORTNAME+JURISTICID |
+| 1.10 | ⚙️ System sets | `created_date` | Current date |
+| 1.11 | ⚙️ System sets | `last_updated_date` | Auto-updated on changes |
 
 **Tables Updated:**
 - `entity_master` - New entity record
@@ -83,6 +87,8 @@ Register a new bank or financial institution as a counterparty for trading.
 | 2.10 | 👤 Set residency | `reside_in_thailand_flag` | MFSMCG rule |
 | 2.11 | ⚙️ System generates | `counterparty_id` | Auto-generated |
 | 2.12 | ⚙️ System sets | `created_date` | Current date |
+| 2.13 | ⚙️ System sets | `last_updated_date` | Auto-updated on changes |
+| 2.14 | ⚙️ System derives | `entity_id` | From entity_master link |
 
 **Tables Updated:**
 - `counterparty_master` - New counterparty record
@@ -122,7 +128,10 @@ Register a new bank or financial institution as a counterparty for trading.
 | 4.4 | 👤 Set approval date | `credit_line_approve_date` | Committee approval date |
 | 4.5 | ⚙️ System sets | `available_line` = `total_credit_line` | Initially fully available |
 | 4.6 | ⚙️ System generates | `limit_id` | Auto-generated |
-| 4.7 | 🔒 Create record | `limit_utilization` | Immutable audit record |
+| 4.7 | ⚙️ System sets | `timestamp` | Event timestamp (GMT+7) |
+| 4.8 | ⚙️ System sets | `created_date` | Current date |
+| 4.9 | ⚙️ System derives | `entity_id` | From counterparty_master |
+| 4.10 | 🔒 Create record | `limit_utilization` | Immutable audit record |
 
 **Limit Types:**
 | Type | Purpose | Applies To |
@@ -150,10 +159,15 @@ Register a new bank or financial institution as a counterparty for trading.
 | 5.2 | 👤 Link counterparty | `counterparty_id` | - |
 | 5.3 | 👤 Select agreement type | `agreement_type` | GMRA, ISDA, CSA |
 | 5.4 | 👤 Select netting type | `netting_type` | CLOSE_OUT, COLLATERAL, SET_OFF |
-| 5.5 | 👤 Set dates | `trade_date` (signature), `value_date` (effective), `maturity_date` (expiry) | - |
-| 5.6 | 👤 Set collateral type | `collateral_contract_type` | REP, BAL, OTC |
-| 5.7 | 👤 Set currency | `settlement_currency` | THB |
-| 5.8 | 👤 Set status | `agreement_status` = 'Active' | - |
+| 5.3 | 👤 Input netting set ID | `netting_set_id` | Logical netting set identifier |
+| 5.4 | 👤 Check if replacement | `is_replacement` | 1=replaces earlier, 0=new |
+| 5.5 | 👤 If replacement, input ID | `replaced_agreement_id` | Previous agreement ID |
+| 5.6 | 👤 Set dates | `trade_date` (signature), `value_date` (effective), `maturity_date` (expiry) | - |
+| 5.7 | 👤 Set collateral type | `collateral_contract_type` | REP, BAL, OTC |
+| 5.8 | 👤 Set currency | `settlement_currency` | THB |
+| 5.9 | 👤 Set status | `agreement_status` = 'Active' | - |
+| 5.10 | ⚙️ System sets | `created_at` | Creation timestamp (GMT+7) |
+| 5.11 | ⚙️ System sets | `updated_at` | Auto-updated on changes |
 
 **Tables Updated:**
 - `netting_agreement` - New agreement record
@@ -218,7 +232,8 @@ Add a new bond/security to the system before it can be traded.
 | 1.16 | 👤 Input ratings | `rating_tris`, `rating_fitch` | Initial ratings |
 | 1.17 | 👤 Set eligibility | `is_eligible_bot_repo_collateral`, `is_eligible_crm_collateral` | Policy decision |
 | 1.18 | 👤 Set status | `status` = 'Active' | Ready for trading |
-| 1.19 | ⚙️ System sets | `status_timestamp` | Current timestamp |
+| 1.19 | 👤 Set cross-default flag | `cross_default` | FALSE by default |
+| 1.20 | ⚙️ System sets | `status_timestamp` | Current timestamp (GMT+7) |
 
 **Issuer ID Mapping:**
 | ID | Type | Unique ID Source |
@@ -531,6 +546,75 @@ Before executing any trade, verify:
 
 ---
 
+## 0.5 Portfolio Setup (IT Admin)
+
+### Overview
+Create new trading portfolios with accounting classification before trading begins.
+
+**Participating Teams:** IT Admin → Treasury Approval
+
+**Total Time:** 1 business day
+
+---
+
+### Step 1: Portfolio Creation (IT Admin)
+
+**Responsible:** IT Administrator
+
+| # | Action | Fields to Input/Update | Notes |
+|---|--------|------------------------|-------|
+| 1.1 | 👤 Input portfolio name | `portfolio_name` | Include accounting classification + asset type (e.g., "AMC - Govt Bonds") |
+| 1.2 | 👤 Assign portfolio manager | `portfolio_manager` | Name or ID of responsible trader |
+| 1.3 | 👤 Select accounting treatment | `accounting_treatment` | AMC (Amortized Cost), FVOCI, or FVTPL |
+| 1.4 | ✅ Verify treasury approval | - | Accounting treatment requires approval |
+| 1.5 | ⚙️ System generates | `portfolio_id` | Auto-generated |
+| 1.6 | ⚙️ System sets | `created_timestamp` | Creation timestamp (GMT+7) |
+
+**Accounting Treatment Options:**
+| Treatment | Description | P&L Recognition |
+|-----------|-------------|-----------------|
+| AMC | Amortized Cost | Accrued interest only, no MTM |
+| FVOCI | Fair Value through OCI | MTM to OCI, realized P&L to P&L |
+| FVTPL | Fair Value through P&L | All MTM and realized to P&L |
+
+**Tables Updated:**
+- `portfolio_master` - New portfolio record
+
+---
+
+## 0.6 Entity-Counterparty Mapping Setup
+
+### Overview
+Establish relationship links between entities (obligor groups) and their trading counterparties for consolidated limit management and regulatory reporting (BOT DER_CPEN).
+
+**Participating Teams:** BO → MO
+
+**Total Time:** Part of onboarding process
+
+---
+
+### Step 1: Entity-Counterparty Link Creation (Back Office)
+
+**Responsible:** Back Office Onboarding Team
+
+| # | Action | Fields to Input/Update | Notes |
+|---|--------|------------------------|-------|
+| 1.1 | 👤 Select entity | `entity_id` | From entity_master |
+| 1.2 | 👤 Select counterparty | `counterparty_id` | From counterparty_master |
+| 1.3 | 👤 Select parent limit | `parent_limit_id` | Group limit reference |
+| 1.4 | 👤 Set effective dates | `effective_from` | Start date (default: today) |
+| 1.5 | 👤 Set end date (if known) | `effective_to` | NULL if ongoing |
+| 1.6 | 👤 Set status | `status` | ACTIVE or INACTIVE |
+| 1.7 | 👤 Add remarks | `remark` | Notes about relationship |
+| 1.8 | ⚙️ System generates | `entity_counterparty_id` | Auto-generated |
+| 1.9 | ⚙️ System sets | `created_date` | Current date |
+| 1.10 | ⚙️ System sets | `last_updated_date` | Auto-updated on changes |
+
+**Tables Updated:**
+- `entity_counterparty` - New mapping record
+
+---
+
 ## 1. Bond Trade - Buy/Sell
 
 ### Overview
@@ -688,6 +772,17 @@ Step 6: Wait for settlement confirmation
 - `bond_positions` - Create/update position
 - `position_costing` - Update WAC (Buy only)
 
+**Position Costing Fields (WAC Method):**
+| Field | Value | Calculation |
+|-------|-------|-------------|
+| `cost_method` | 'WAC' | Weighted Average Cost |
+| `avg_book_price_pct` | Running WAC | sum_product_clean / total_nominal_in |
+| `sum_product_clean` | Σ(clean% × nominal) | Audit trail for WAC |
+| `total_nominal_in` | Σ buys | Total nominal purchased |
+| `cumulative_sold_nominal` | Σ sales | Running total sold |
+| `realized_gain_loss_to_date` | Cumulative P&L | Sum of all realized gains/losses |
+| `last_realization_date` | Last sale date | Date of most recent sell |
+
 ---
 
 ### Step 7: Position Update (System)
@@ -699,8 +794,34 @@ Step 6: Wait for settlement confirmation
 | 7.1 | ⚙️ Update position | `bond_positions.nominal_amount` | += Buy, -= Sell |
 | 7.2 | ⚙️ Calculate WAC | `avg_book_clean_price_pct` | (Sum of costs) / (Total nominal) |
 | 7.3 | ⚙️ Update book value | `book_value` | Nominal × WAC Price / 100 |
-| 7.4 | ⚙️ If SELL | `realized_gain_loss` | (Sell price - WAC) × Sold nominal |
-| 7.5 | ⚙️ If SELL | Create realization event | `position_realization_events` | Immutable record |
+| 7.4 | ⚙️ Set open date | `open_date` | Settlement date for new positions |
+| 7.5 | ⚙️ Calculate market value | `market_value` | (Clean price × Nominal/100) + Accrued |
+| 7.6 | ⚙️ If SELL | `realized_gain_loss` | (Sell price - WAC) × Sold nominal |
+| 7.7 | ⚙️ If SELL | Create realization event | `position_realization_events` | Immutable record |
+| 7.8 | ⚙️ Create/update | `bond_transactions` | Transaction log entry |
+
+**Bond Transactions Record Fields:**
+| Field | Value Source |
+|-------|--------------|
+| `trade_id` | bond_trade_id or CPN_ prefix for coupons |
+| `security_id` | From trade |
+| `portfolio_id` | From trade |
+| `counterparty_id` | From trade |
+| `trade_type` | Buy, Sell, Repo, ReverseRepo, Coupon |
+| `nominal_amount` | Trade amount |
+| `clean_price_trade` | Trade price |
+| `clean_price` | Current market price |
+| `accrued_interest` | Calculated daily |
+| `dirty_price` | Clean + Accrued |
+| `book_value` | For buy: cost basis; for sell: carrying amount |
+| `market_value` | MTM valuation |
+| `classification` | From portfolio_master (AMC/FVOCI/FVTPL) |
+| `last_coupon_date` | From security_master or last payment |
+| `coupon_rate`, `coupon_frequency`, `coupon_day_count_conv` | From security_master |
+| `rating_tris`, `rating_fitch` | Current ratings |
+| `status` | Active, Matured, In-Default |
+| `valuation_date` | Last MTM date |
+| `last_updated_timestamp` | Auto (GMT+7) |
 
 **For SELL Trades:**
 - Calculate realized P&L
@@ -709,6 +830,7 @@ Step 6: Wait for settlement confirmation
 
 **Tables Updated:**
 - `bond_positions` - Position quantities and values
+- `bond_transactions` - Transaction log/history
 - `position_costing` - Running WAC totals
 - `position_realization_events` - Immutable P&L record (Sell only)
 
@@ -768,8 +890,10 @@ THB placements (lending) and takings (borrowing) with Thai banks.
 | 1.8 | 👤 If FLOATING | `reference_rate`, `margin`, `reference_rate_tenor` | THOR + spread |
 | 1.9 | 👤 Select day count | `day_count_convention` | ACT/365, ACT/360, 30/360 |
 | 1.10 | ⚙️ System calculates | `term` | Days between value and maturity |
-| 1.11 | ⚙️ System generates | `deal_id` | Auto-generated |
-| 1.12 | ⚙️ System sets | `status` = 'PENDING_APPROVAL' | - |
+| 1.11 | ⚙️ System generates | `reference_rate_id` | ReferenceRate + Tenor + DealID |
+| 1.12 | ⚙️ System generates | `deal_id` | Auto-generated |
+| 1.13 | ⚙️ System derives | `entity_id` | From counterparty_master |
+| 1.14 | ⚙️ System sets | `status` = 'PENDING_APPROVAL' | - |
 
 **Floating Rate Setup:**
 - If `interest_rate_type` = 'FLOATING':
@@ -808,10 +932,11 @@ THB placements (lending) and takings (borrowing) with Thai banks.
 | 3.1 | 👤 Prepare BAHTNET | - | Generate MT103 |
 | 3.2 | 👤 Upload to portal | - | Manual BAHTNET process |
 | 3.3 | 👤 Confirm value date | - | Cash moves on value_date |
-| 3.4 | 👤 Update status | `status` = 'ACTIVE' | After confirmation |
+| 3.4 | 👤 Input confirmation ref | `confirmation_ref` | ISO 20022 reference |
+| 3.5 | 👤 Update status | `status` = 'ACTIVE' | After confirmation |
 
 **Tables Updated:**
-- `interbank_deals` - Update `status`
+- `interbank_deals` - Update `status`, `confirmation_ref`
 
 ---
 
@@ -883,9 +1008,15 @@ Sale and repurchase of securities (Repo = lend cash, take collateral; Reverse Re
 | 1.7 | 👤 Input repo rate | `interest_rate` | Annual repo rate |
 | 1.8 | 👤 If FLOATING | `reference_rate`, `margin` | THOR + spread |
 | 1.9 | 👤 Select day count | `day_count_convention` | Typically ACT/365 |
-| 1.10 | ⚙️ System calculates | `purchase_price` | Cash on day 1 |
-| 1.11 | ⚙️ System calculates | `repurchase_price` | Cash on day 2 (includes interest) |
-| 1.12 | ⚙️ System generates | `repo_trade_id` | ≥70000 |
+| 1.10 | ⚙️ System derives | `netting_set_id` | From netting_agreement |
+| 1.11 | ⚙️ System calculates | `purchase_price` | Cash on day 1 |
+| 1.12 | ⚙️ System calculates | `repurchase_price` | Cash on day 2 (includes interest) |
+| 1.13 | ⚙️ System calculates | `repo_rate` | Implied interest rate |
+| 1.14 | ⚙️ System calculates | `term` | Days between purchase and repurchase |
+| 1.15 | ⚙️ System sets flags | `repo_out_flag`, `repo_in_flag` | Based on trade type |
+| 1.16 | ⚙️ System generates | `reference_rate_id` | Reference rate + repo_trade_id |
+| 1.17 | ⚙️ System derives | `entity_id` | From counterparty_master |
+| 1.18 | ⚙️ System generates | `repo_trade_id` | ≥70000 |
 
 **Tables Updated:**
 - `repo_trades` - New record
@@ -923,7 +1054,8 @@ Sale and repurchase of securities (Repo = lend cash, take collateral; Reverse Re
 | 3.7 | ⚙️ Calculate after haircut | `collateral_value_after_haircut` | Market value × (1 - Haircut%) |
 | 3.8 | ✅ Validate | - | Collateral value must >= Repo exposure |
 | 3.9 | 👤 Confirm allocation | - | If valid, proceed |
-| 3.10 | ⚙️ Create record | `collateral_id` | Auto-generated |
+| 3.10 | ⚙️ System sets | `allocation_date` | Current date |
+| 3.11 | ⚙️ Create record | `collateral_id` | Auto-generated |
 
 **Haircut Example:**
 ```
@@ -1005,19 +1137,30 @@ Securities Nominal Needed: 100,000,000 / (1 - 0.02) = 102,040,816 THB
 | # | Action | Fields to Update | Notes |
 |--------|--------|------------------|-------|
 | 6b.1 | 📧 Receive agreement | - | From Middle Office |
-| 6b.2 | 👤 If CASH margin | Create `cash_margin_movements` | PAY or RECEIVE |
-| 6b.3 | 👤 If COLLATERAL | Create new `collateral_positions` | Additional securities |
-| 6b.4 | 👤 Settle by due time | - | T+1 11:00 |
-| 6b.5 | 👤 Update margin status | `margin_calls.status` = 'SETTLED' | After confirmation |
-| 6b.6 | 👤 If cash margin | `cash_margin_movements` | Record movement |
+| 6b.2 | 👤 If CASH margin | Create `cash_margin_movements` | Record cash movement |
+| 6b.3 | 👤 Input movement details | `movement_type` (PAY/RECEIVE), `amount` | Direction and amount |
+| 6b.4 | 👤 Input bank account | `bank_account_code` | GL/nostro account |
+| 6b.5 | 👤 Input value date | `value_date` | Settlement date |
+| 6b.6 | ⚙️ System calculates | `outstanding_balance` | Running net balance |
+| 6b.7 | ⚙️ System sets interest params | `interest_on_margin_code`, `interest_on_margin_rate` | GMRA terms |
+| 6b.8 | ⚙️ System sets day count | `day_count_basis` | Typically ACT/365 |
+| 6b.9 | 👤 If COLLATERAL | Create new `collateral_positions` | Additional securities |
+| 6b.10 | 👤 Settle by due time | - | T+1 11:00 |
+| 6b.11 | 👤 Update margin status | `margin_calls.status` = 'SETTLED' | After confirmation |
 
-**Cash Margin Interest:**
-- Posted margin earns interest at GMRA rate
-- Daily accrual on `cash_margin_movements.accrued_int_receivable`
+**Cash Margin Interest (Daily 18:00):**
+| Field | Calculation |
+|-------|-------------|
+| `daily_accrued_int_receivable` | outstanding_balance × rate × (1/365) |
+| `accrued_int_receivable` | Cumulative sum of daily accruals |
+| `accrual_days` | Calendar days covered |
+| `interest_direction` | RECEIVABLE (we posted margin) or NONE |
+
+**Note:** Interest only accrues when `outstanding_balance` < 0 (we posted cash margin)
 
 **Tables Updated:**
 - `margin_calls` - Workflow status
-- `cash_margin_movements` - If cash margin posted
+- `cash_margin_movements` - Cash movement record with all fields
 - `collateral_positions` - If additional securities posted
 
 ---
@@ -1129,6 +1272,100 @@ Securities Nominal Needed: 100,000,000 / (1 - 0.02) = 102,040,816 THB
 
 ---
 
+### 4.3 Bond Transactions Lifecycle
+
+**Purpose:** Track all bond-related transactions including buys, sells, repos, and coupon payments. This is the historical transaction log table.
+
+**Trigger:** Any bond trade event (buy, sell, repo, coupon payment)
+
+**Participating Teams:** System (Auto) + All Teams
+
+---
+
+#### Transaction Types
+
+| Type | Description | Created By |
+|------|-------------|------------|
+| Buy | Outright bond purchase | Front Office trade |
+| Sell | Outright bond sale | Front Office trade |
+| Repo | Securities financing - lend cash | Front Office trade |
+| ReverseRepo | Securities financing - borrow cash | Front Office trade |
+| Rehypothecation | Re-use of collateral | Front Office trade |
+| Coupon | Standalone coupon payment | System (scheduled) |
+
+---
+
+#### Buy Transaction Fields
+
+| Field | Source | Notes |
+|-------|--------|-------|
+| `trade_id` | bond_trade_id | Links to originating trade |
+| `security_id` | bond_trades | From trade |
+| `portfolio_id` | bond_trades | From trade |
+| `counterparty_id` | bond_trades | From trade |
+| `trade_type` | 'Buy' | Fixed value |
+| `trade_date` | bond_trades | Execution date |
+| `settlement_date` | bond_trades | T+2 date |
+| `maturity_date` | security_master | From security |
+| `currency` | 'THB' | Fixed |
+| `nominal_amount` | bond_trades | Face value |
+| `clean_price_trade` | bond_trades | Trade price |
+| `clean_price` | ThaiBMA EOD | Market price at valuation |
+| `accrued_interest` | Calculated | From issue to settlement |
+| `dirty_price` | Calculated | Clean + Accrued |
+| `book_value` | Calculated | Clean × Nominal / 100 |
+| `classification` | portfolio_master | AMC/FVOCI/FVTPL |
+| `coupon_rate`, `coupon_frequency`, `coupon_day_count_conv` | security_master | Bond terms |
+| `rating_tris`, `rating_fitch` | security_master | Current ratings |
+| `status` | 'Active' | Initial status |
+| `valuation_date` | Current date | Last MTM |
+| `last_updated_timestamp` | System | Auto (GMT+7) |
+
+---
+
+#### Sell Transaction Fields
+
+Same as Buy, plus:
+
+| Field | Source | Notes |
+|-------|--------|-------|
+| `book_value` | position_costing | Carrying amount of portion sold |
+| `market_clean_value` | Calculated | Market price × Sold nominal |
+| `market_value` | Calculated | Market clean + Accrued |
+| `realized_gain_loss` | Calculated | (Sell price - WAC) × Sold nominal |
+
+---
+
+#### Coupon Transaction Fields
+
+| Field | Value | Notes |
+|-------|-------|-------|
+| `trade_id` | CPN_ prefix | Format: CPN_<SecurityID>_YYYYMMDD_nn |
+| `trade_type` | 'Coupon' | Fixed value |
+| `nominal_amount` | Calculated | Coupon = Nominal × CouponRate × Frequency |
+| `clean_price_trade` | 0 or NULL | No principal change |
+| `accrued_interest` | Full coupon | Cash received |
+| `book_value` | 0 or NULL | No carrying amount change |
+
+---
+
+#### Daily Updates (18:00 Batch)
+
+| Field | Update Frequency | Calculation |
+|-------|------------------|-------------|
+| `clean_price` | Daily | From ThaiBMA EOD file |
+| `market_clean_value` | Daily | Clean price × Nominal / 100 |
+| `market_value` | Daily | Market clean + Accrued interest |
+| `book_value` | Daily | For AMC: amortized cost; For FVOCI: carrying amount |
+| `unrealized_gain_loss` | Daily | Market value - Book value (FVOCI only) |
+| `valuation_date` | Daily | Current date |
+| `last_updated_timestamp` | Daily | Auto (GMT+7) |
+
+**Tables Updated:**
+- `bond_transactions` - All transaction records updated daily
+
+---
+
 ## 5. Summary Tables by Team
 
 ### Front Office Actions
@@ -1151,12 +1388,13 @@ Securities Nominal Needed: 100,000,000 / (1 - 0.02) = 102,040,816 THB
 
 | Transaction | Action | Fields to Update |
 |-------------|--------|------------------|
-| Bond Trade | Confirm settlement | settlement_status (SETTLED/FAILED) |
-| Interbank | BAHTNET settlement | status (ACTIVE/MATURED) |
-| Repo | Collateral allocation | collateral_positions (CREATE) |
-| Repo | Margin settlement | margin_calls.status (SETTLED), cash_margin_movements (CREATE) |
+| Bond Trade | Confirm settlement | settlement_status (SETTLED/FAILED), bond_transactions (CREATE) |
+| Interbank | BAHTNET settlement | status (ACTIVE/MATURED), confirmation_ref |
+| Repo | Collateral allocation | collateral_positions (CREATE with allocation_date) |
+| Repo | Margin settlement | margin_calls.status (SETTLED), cash_margin_movements (CREATE with all interest fields) |
 | Repo | Substitution | collateral_positions (CREATE new, RELEASE old) |
-| Daily Process | ThaiBMA import | security_master.clean_price |
+| Setup | Entity-Counterparty mapping | entity_counterparty (CREATE) |
+| Daily Process | ThaiBMA import | security_master fields, bond_transactions clean_price |
 | All | Maturity processing | status (MATURED) |
 
 ### System Actions (Automatic)
@@ -1166,7 +1404,7 @@ Securities Nominal Needed: 100,000,000 / (1 - 0.02) = 102,040,816 THB
 | Accrued Interest Calculation | bond_positions.accrued_interest, interbank_deals.accrued_interest, repo_trades.accrued_interest | Daily 18:00 |
 | MTM Valuation | bond_positions.market_value, collateral_positions.market_value | Daily 19:00 |
 | Margin Calculation | margin_calls (CREATE/UPDATE) | Daily 17:00 |
-| Coupon Payment | bond_transactions (CREATE), bond_positions.accrued_interest (RESET) | On coupon date |
+| Coupon Payment | bond_transactions (CREATE with CPN_ prefix), bond_positions.accrued_interest (RESET) | On coupon date |
 | Maturity Processing | status='MATURED' (multiple tables) | On maturity date |
 | Limit Utilization | limit_utilization (CREATE) | On trade/maturity |
 

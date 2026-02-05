@@ -5,6 +5,21 @@
 
 ---
 
+## 🌐 Interactive Portal
+
+**For a better viewing experience, open the interactive Transaction Flow Portal:**
+
+👉 **[Open Transaction Flow Portal](./transaction_flow.html)** *(Right-click → Open with browser)*
+
+The portal provides:
+- Interactive navigation between all flow types
+- Zoomable Mermaid diagrams
+- Collapsible sections
+- Mobile-responsive design
+- Print-friendly layout
+
+---
+
 ## 1. Bond Trade Flow (Buy/Sell)
 
 ### Overall Flow

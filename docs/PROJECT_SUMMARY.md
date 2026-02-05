@@ -14,7 +14,8 @@ This document combines all development work from February 2-3, 2026:
 |-----|-------|------------------|
 | **Feb 2** | Backend Implementation | Sprint 1 (Foundation) + Sprint 2 (Bond Trading) complete |
 | **Feb 3** | Design Documentation | 5 comprehensive design documents created |
-| **Feb 5** | Documentation Restructure | Consolidated 14+ docs into 8 core documents, added visual flow diagrams |
+| **Feb 5 (AM)** | Documentation Restructure | Consolidated 14+ docs into 8 core documents, added visual flow diagrams |
+| **Feb 5 (PM)** | Field Alignment & Interactive Portal | Added 77 missing fields, created FIELD_WORKFLOW_MAPPING.md, interactive HTML portal |
 
 **Total Output:**
 - 94 API endpoints
@@ -310,16 +311,18 @@ docs/
 │   └── FIELD_REFERENCE.md                 ← Field definitions
 │
 ├── 02-PROCESSES/
-│   ├── TRANSACTION_WORKFLOWS.md           ← Text workflows
-│   ├── PRE_TRANSACTION_SETUP.md           ← Setup procedures
-│   └── TRANSACTION_FLOW_DIAGRAMS.md       ← Visual diagrams ← NEW
+│   ├── TRANSACTION_WORKFLOWS.md           ← Text workflows (updated)
+│   ├── FIELD_WORKFLOW_MAPPING.md          ← Field-to-workflow mapping ← NEW
+│   ├── PRE_TRANSACTION_SETUP.md           ← Setup procedures (updated)
+│   ├── TRANSACTION_FLOW_DIAGRAMS.md       ← Visual diagrams
+│   └── transaction_flow.html              ← Interactive portal ← NEW
 │
 ├── 03-IMPLEMENTATION/
 │   ├── DEVELOPMENT_GUIDE.md               ← Build guide
 │   └── SETUP_INSTRUCTIONS.md              ← Environment setup
 │
 ├── 04-OPERATIONS/
-│   ├── DAILY_OPERATIONS.md                ← Daily procedures ← NEW
+│   ├── DAILY_OPERATIONS.md                ← Daily procedures
 │   └── STAKEHOLDER_CHECKLIST.md           ← Review checklist
 │
 └── archive/                               ← Old documents preserved
@@ -346,6 +349,87 @@ docs/
 | **Naming Convention** | Mixed PascalCase/snake_case | Standardized snake_case |
 | **Security Master Owner** | Listed as IT Admin | Updated to Back Office |
 | **ThaiBMA Timing** | Only 17:00 | Added month-end 17:30-18:00 |
+
+---
+
+## PART 4: Field Alignment & Interactive Portal (Feb 5, 2026 - Evening)
+
+### Database-to-Workflow Alignment
+
+**Objective:** Ensure all 272 database fields from 18 tables are documented in workflow processes.
+
+#### Work Completed
+
+| Task | Description | Fields Added |
+|------|-------------|--------------|
+| **TRANSACTION_WORKFLOWS.md Update** | Added missing fields across all workflow sections | 77 fields |
+| **PRE_TRANSACTION_SETUP.md Update** | Aligned with database design and TRANSACTION_WORKFLOWS.md | 17 fields + 3 new sections |
+| **FIELD_WORKFLOW_MAPPING.md** | New comprehensive mapping document | 272 fields mapped |
+| **Interactive HTML Portal** | Created transaction_flow.html with React + Mermaid | 7 flow categories |
+
+#### TRANSACTION_WORKFLOWS.md Enhancements
+
+**New Sections Added:**
+| Section | Content | Tables Covered |
+|---------|---------|----------------|
+| 0.5 Portfolio Setup | Portfolio creation with accounting treatment (AMC/FVOCI/FVTPL) | portfolio_master |
+| 0.6 Entity-Counterparty Mapping | Entity to counterparty relationship setup | entity_counterparty |
+| 4.3 Bond Transactions Lifecycle | Complete transaction log documentation | bond_transactions |
+
+**Key Fields Added:**
+- Entity Master: `industry_sector`, `g_sib_type`, timestamps
+- Limit Utilization: `timestamp`, `created_date`, `entity_id`
+- Netting Agreement: `netting_set_id`, `is_replacement`, `replaced_agreement_id`, timestamps
+- Repo Trades: `netting_set_id`, `repo_rate`, `repo_out_flag`, `repo_in_flag`
+- Cash Margin: `bank_account_code`, interest accrual fields
+- Position Costing: `cost_method`, `sum_product_clean`, `last_realization_date`
+
+#### PRE_TRANSACTION_SETUP.md Alignment
+
+**Fixed Issues:**
+| Issue | Fix |
+|-------|-----|
+| Broken cross-references (3) | Updated to correct paths |
+| Missing fields (17) | Added to respective sections |
+| Missing sections (3) | Created PART C, D, E |
+| Missing limit type | Added CONCENTRATION limit |
+
+**New Sections:**
+- **PART C: Portfolio Setup** - IT Admin workflow for portfolio creation
+- **PART D: Entity-Counterparty Mapping** - Relationship setup for consolidated limits
+- **PART E: Market Data Management** - ThaiBMA import and index rate upload
+
+#### FIELD_WORKFLOW_MAPPING.md (New Document)
+
+**Purpose:** Comprehensive mapping of all 272 database fields to specific workflow steps.
+
+**Structure:**
+- Master Data Tables (5 tables, 50+ fields each)
+- Transaction Tables (5 tables)
+- Position/Collateral Tables (4 tables)
+- Control/Risk Tables (4 tables)
+- Summary by update frequency (Daily, Deal, Manual, Scheduled)
+
+#### Interactive Transaction Flow Portal
+
+**File:** `docs/02-PROCESSES/transaction_flow.html`
+
+**Features:**
+- React-based single-page application
+- 7 interactive flow categories:
+  - Bond Trade Flow
+  - Interbank Deal Flow
+  - Repo Trade Flow
+  - Client Onboarding
+  - New Bond Setup
+  - Daily Operations
+  - Reference & Legend
+- Mermaid.js diagrams with zoom support
+- Responsive sidebar navigation
+- Print-friendly layout
+- Status icons legend and team abbreviations
+
+**Usage:** Open in browser for interactive experience
 
 ---
 
@@ -448,8 +532,9 @@ data/extracted/
 | **API Routes** | 94 |
 | **Database Tables** | 18 |
 | **Service Modules** | 6 |
-| **Documentation** | 8 core documents, restructured |
-| **Lines of Documentation** | 5,000+ |
+| **Documentation** | 10 core documents (8 + 2 new) |
+| **Lines of Documentation** | 6,000+ |
+| **Database Fields Mapped** | 272 (100% coverage) |
 | **Sprints Complete** | 2 |
 | **Git Commits** | 15+ |
 
@@ -464,7 +549,9 @@ data/extracted/
 | System Design | `docs/01-DESIGN/SYSTEM_DESIGN.md` |
 | Field Reference | `docs/01-DESIGN/FIELD_REFERENCE.md` |
 | Transaction Workflows | `docs/02-PROCESSES/TRANSACTION_WORKFLOWS.md` |
+| Field Workflow Mapping | `docs/02-PROCESSES/FIELD_WORKFLOW_MAPPING.md` |
 | Transaction Flow Diagrams | `docs/02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md` |
+| Interactive Flow Portal | `docs/02-PROCESSES/transaction_flow.html` |
 | Setup Procedures | `docs/02-PROCESSES/PRE_TRANSACTION_SETUP.md` |
 | Development Guide | `docs/03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md` |
 | Daily Operations | `docs/04-OPERATIONS/DAILY_OPERATIONS.md` |
@@ -474,4 +561,4 @@ data/extracted/
 
 **End of Combined Session Summary**
 
-*Sprints 1-2 Complete | Documentation Restructure Complete (Feb 5) | Ready for Stakeholder Review | Sprint 3 Pending*
+*Sprints 1-2 Complete | Documentation Restructure Complete | Field Alignment Complete (272 fields) | Interactive Portal Created | Ready for Stakeholder Review | Sprint 3 Pending*

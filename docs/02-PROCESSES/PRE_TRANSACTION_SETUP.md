@@ -4,9 +4,9 @@
 **Purpose:** Step-by-step guide for onboarding new clients and setting up new bonds before trading
 
 **Related Documents:**
-- [Transaction Process Guide](./TRANSACTION_PROCESS_GUIDE.md) - Complete trading workflows
-- [Field Update Matrix](./Field_Update_Matrix.md) - Field-level details
-- [Treasury System Detailed Design Input](./Treasury_System_Detailed_Design_Input.md) - Team responsibilities
+- [Transaction Workflows](./TRANSACTION_WORKFLOWS.md) - Complete trading workflows with field-level details
+- [Field Reference](../01-DESIGN/FIELD_REFERENCE.md) - Field definitions and update rules
+- [System Design](../01-DESIGN/SYSTEM_DESIGN.md) - Architecture, team responsibilities, and database design
 
 ---
 
@@ -46,8 +46,13 @@
 | `country_code` | ISO country code | TH | ✅ |
 | `registered_capital_amount` | Registered capital | 40000000000 | |
 | `financials_currency` | Capital currency | THB | |
+| `industry_sector` | Moody’s industry sector | FINANCIALS | |
+| `g_sib_type` | G-SIB/D-SIB classification | D | |
 
-4. System auto-generates: `entity_id` = BBL0107536000374
+4. System auto-generates:
+   - `entity_id` = BBL0107536000374
+   - `created_date` = Current date
+   - `last_updated_date` = Current date (auto-updated on changes)
 
 #### Output:
 - Entity record created
@@ -79,6 +84,12 @@
 | `involved_party_type` | BOT code | 176039 | BOT reference |
 | `customer_code` | Internal code | 2008 | Internal policy |
 | `reside_in_thailand_flag` | Residency | TRUE | MFSMCG rule |
+
+4. System auto-generates:
+   - `counterparty_id` (auto-generated)
+   - `entity_id` (derived from entity_master link)
+   - `created_date` = Current date
+   - `last_updated_date` = Current date (auto-updated on changes)
 
 #### BOT Involved Party Type Reference:
 | Code | Description |
@@ -138,6 +149,7 @@
 | REPO_LIMIT | Repo/Reverse Repo trading | 1,000,000,000 THB |
 | SINGLE_TXN | Maximum single transaction | 500,000,000 THB |
 | TENOR | Maximum maturity allowed | 365 days |
+| CONCENTRATION | Sector/issuer concentration | Portfolio level monitoring |
 
 > **Note:** Limits are controlled at product level (PLACEMENT_LIMIT for interbank, REPO_LIMIT for repo). There is no aggregate cross-product limit.
 
@@ -148,6 +160,10 @@
 
 5. System automatically:
    - Sets `available_line` = `total_credit_line`
+   - Generates `limit_id` (auto-generated)
+   - Sets `timestamp` (event timestamp, GMT+7)
+   - Sets `created_date` (current date)
+   - Derives `entity_id` (from counterparty_master)
    - Creates immutable `limit_utilization` record
 
 #### Alert Thresholds:
@@ -178,14 +194,21 @@
 |-------|-------------|---------|
 | `netting_agreement_id` | Agreement ID | GMRA_2023_BBL |
 | `counterparty_id` | Counterparty | BBL |
+| `netting_set_id` | Logical netting set ID | 20001 |
 | `agreement_type` | Type | GMRA |
-| `netting_type` | Netting style | CLOSE_OUT |
-| `collateral_contract_type` | Collateral | REP |
+| `netting_type` | Netting style | CLOSE_OUT, COLLATERAL, SET_OFF |
+| `collateral_contract_type` | Collateral | REP, BAL, OTC |
+| `is_replacement` | Replaces earlier agreement? | 0 (No) or 1 (Yes) |
+| `replaced_agreement_id` | Previous agreement ID | GMRA_2020_BBL (if replacement) |
 | `trade_date` | Signature date | 2023-06-15 |
 | `value_date` | Effective date | 2023-07-01 |
 | `maturity_date` | Expiry date | 2025-06-30 |
 | `settlement_currency` | Currency | THB |
-| `agreement_status` | Status | Active |
+| `agreement_status` | Status | Active, Matured, In-Default |
+
+4. System auto-generates:
+   - `created_at` = Creation timestamp (GMT+7)
+   - `updated_at` = Auto-updated on changes
 
 #### Output:
 - Agreement record created
@@ -232,6 +255,268 @@
 #### Output:
 - **Counterparty READY for trading**
 - Can be selected in trade entry screens
+
+---
+
+## PART C: Portfolio Setup (IT Admin)
+
+### Why This Matters
+**All trading must be assigned to a portfolio with proper accounting classification.** This determines how P&L is recognized and reported.
+
+**Participating Teams:** IT Admin → Treasury Approval
+
+**Total Time:** 1 business day
+
+---
+
+### Step 1: Portfolio Creation
+
+**Who:** IT Administrator  
+**Time:** 30 minutes  
+**System:** Treasury Management System → Master Data → Portfolios
+
+#### Actions:
+1. Navigate to Portfolio Master
+2. Click "Create New Portfolio"
+3. Fill in required fields:
+
+| Field | Description | Example | Required |
+|-------|-------------|---------|----------|
+| `portfolio_name` | Portfolio name with classification | AMC - Govt Bonds | ✅ |
+| `portfolio_manager` | Responsible manager/trader | John Doe | ✅ |
+| `accounting_treatment` | Accounting classification | FVOCI | ✅ |
+
+#### Accounting Treatment Options:
+| Treatment | Description | P&L Recognition |
+|-----------|-------------|-----------------|
+| AMC | Amortized Cost | Accrued interest only, no MTM |
+| FVOCI | Fair Value through OCI | MTM to OCI, realized P&L to P&L |
+| FVTPL | Fair Value through P&L | All MTM and realized to P&L |
+
+4. Obtain Treasury approval for accounting treatment
+5. System auto-generates:
+   - `portfolio_id` (auto-generated)
+   - `created_timestamp` (GMT+7)
+
+#### Output:
+- Portfolio record created
+- Available for trade entry
+- Front Office can assign trades to this portfolio
+
+---
+
+## PART D: Entity-Counterparty Mapping Setup
+
+### Why This Matters
+**Required for consolidated limit management and BOT DER_CPEN regulatory reporting.** Maps trading counterparties to their parent entity groups.
+
+**Participating Teams:** Back Office → Middle Office
+
+**Total Time:** Part of onboarding process (15 minutes)
+
+---
+
+### Step 1: Create Entity-Counterparty Link
+
+**Who:** Back Office Onboarding Team  
+**Time:** 15 minutes  
+**System:** Treasury Management System → Master Data → Entity-Counterparty Mapping
+
+#### Actions:
+1. Select entity from `entity_master`
+2. Select counterparty from `counterparty_master`
+3. Fill in required fields:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `entity_id` | Parent entity | BBL0107536000374 |
+| `counterparty_id` | Trading counterparty | 101 |
+| `parent_limit_id` | Group limit reference | 2001 |
+| `effective_from` | Start date | 2024-01-15 |
+| `effective_to` | End date (if known) | NULL (ongoing) |
+| `status` | Mapping status | ACTIVE |
+| `remark` | Notes | Primary trading entity |
+
+4. System auto-generates:
+   - `entity_counterparty_id` (auto-generated)
+   - `created_date` (current date)
+   - `last_updated_date` (auto-updated on changes)
+
+#### Output:
+- Entity-counterparty mapping created
+- Enables consolidated limit monitoring
+- Supports BOT DER_CPEN reporting
+
+---
+
+## PART E: Market Data Management
+
+### Why This Matters
+**Daily market data is essential for:**
+- Floating rate calculations (THOR, THORA)
+- Mark-to-market valuation
+- Collateral management
+- Regulatory reporting
+
+**Participating Teams:** Back Office (Primary) + IT (Support)
+
+---
+
+## E.1 Index Rate Upload (THOR, THORA, SOFR)
+
+### Purpose
+Provide reference rates for floating rate instruments.
+
+**Source:** ThaiBMA, BOT
+
+---
+
+### Step 1: Daily Rate Download (Back Office)
+
+**Who:** Back Office Market Data  
+**Time:** 15 minutes  
+**Timing:** Daily ~11:00 AM
+
+#### Actions:
+1. Download rates from ThaiBMA website/API:
+   - THOR (Thai Overnight Repo Rate)
+   - THORA (THOR Average)
+2. Verify against previous day (±50bp threshold)
+3. Flag anomalous rates for review
+
+#### THOR Tenors:
+| Tenor | Description | Usage |
+|-------|-------------|-------|
+| O/N | Overnight | Short-term deals |
+| 1W | 1 Week | - |
+| 1M | 1 Month | Most common |
+| 3M | 3 Months | - |
+| 6M | 6 Months | - |
+
+---
+
+### Step 2: Rate Import (Back Office)
+
+**Who:** Back Office Market Data
+
+#### Actions:
+1. Import rates to `interbank_interest_schedule`
+2. System automatically:
+   - Updates `reset_rate` with new THOR fixing
+   - Calculates `interest_rate` = ResetRate + Margin
+   - Updates `interbank_deals.interest_rate` for floating deals
+   - Rolls forward `last_reset_date` and `next_reset_date`
+
+#### Output:
+- Floating rate deals updated with new rates
+- Front Office notified of rate changes
+
+---
+
+## E.2 Bond Mark-to-Market Price Upload
+
+### Purpose
+Daily bond prices for valuation, collateral management, and regulatory reporting.
+
+**Source:** ThaiBMA EOD (End-of-Day) price file
+
+**Critical Path:** Must complete before 18:00 batch calculation
+
+---
+
+### Step 1: Download ThaiBMA EOD File (Back Office)
+
+**Who:** Back Office Market Data  
+**Time:** 15 minutes  
+**Timing:** 
+- Normal Day: 17:00
+- Month-End Day: 17:30-18:00 (later release)
+
+#### Actions:
+1. Login to ThaiBMA portal (https://www.thaibma.or.th)
+2. Navigate to Market Data → EOD Prices
+3. Download file: `THAIBMA_MTM_YYYYMMDD.csv`
+4. Save to designated folder for system pickup
+
+#### File Format (CSV):
+| Column | Description | Example |
+|--------|-------------|---------|
+| Security_ID | ThaiBMA symbol | LB28DA |
+| ISIN | ISIN code | TH0623038C09 |
+| Clean_Price | EOD clean price % | 101.25 |
+| Accrued_Interest | Accrued interest % | 2.15 |
+| Yield | Yield to maturity % | 2.35 |
+
+---
+
+### Step 2: File Validation (Back Office)
+
+**Who:** Back Office Market Data
+
+#### Validation Checks:
+| Check | Threshold | Action |
+|-------|-----------|--------|
+| Completeness | 100% coverage | Flag missing securities |
+| Price movement | ±5% vs previous | Warning flag |
+| Price movement | ±10% vs previous | Alert + MO approval |
+| Price movement | >±20% vs previous | Hard stop + Risk Manager |
+| Zero/null prices | Price > 0 | Manual input required |
+
+---
+
+### Step 3: Price Import to System (Back Office)
+
+**Who:** Back Office Market Data
+
+#### Actions:
+1. Import via "Market Data Upload" function
+2. System validates file format and price ranges
+3. System updates:
+   - `bond_positions.clean_price` (for MTM)
+   - `bond_positions.market_rate` (ThaiBMA yield)
+   - `collateral_positions.valuation_price` (collateral MTM)
+4. System logs import audit trail
+
+---
+
+### Step 4: EOD Batch Processing (System - 18:00)
+
+**Who:** System (Automatic)
+
+#### Batch Schedule:
+| Time | Process | Duration |
+|------|---------|----------|
+| 18:00 | Accrued interest calculation | 20 min |
+| 18:30 | Position build | 30 min |
+| 19:00 | MTM valuation | 15 min |
+| 19:30 | GL journal generation | 15 min |
+
+#### Fields Updated:
+| Table | Fields | Calculation |
+|-------|--------|-------------|
+| `bond_positions` | `accrued_interest`, `dirty_price`, `market_value`, `unrealized_gain_loss` | Daily batch |
+| `collateral_positions` | `market_value`, `collateral_value_after_haircut` | Daily MTM |
+| `bond_transactions` | `clean_price`, `market_value`, `valuation_date` | Daily MTM |
+
+---
+
+### Step 5: Verification (Back Office)
+
+**Who:** Back Office Market Data + Accounting  
+**Time:** 30 minutes  
+**Timing:** 19:30-20:00
+
+#### Actions:
+1. Verify calculations in `bond_positions`
+2. Review exception reports (stale prices, missing data)
+3. Confirm GL posting
+4. Sign off daily market data report
+
+#### Exception Report Contents:
+- Securities with stale prices (>1 day)
+- Price movements exceeding thresholds
+- Missing prices requiring manual input
+- Calculation errors
 
 ---
 
@@ -306,7 +591,11 @@
 | `rating_fitch` | Fitch rating | AAA(tha) |
 | `is_eligible_bot_repo_collateral` | BOT repo eligible | TRUE |
 | `is_eligible_crm_collateral` | CRM eligible | TRUE |
-| `status` | Status | Active |
+| `status` | Status | Active, Matured, Defaulted |
+| `cross_default` | Cross-default triggered | FALSE |
+
+4. System auto-generates:
+   - `status_timestamp` = Current timestamp (GMT+7)
 
 #### Validation Rules:
 - ISIN: TH + 9 digits + check digit
@@ -405,22 +694,19 @@
 |------|------|--------|
 | Entity setup | Onboarding | Master Data → Entity |
 | Counterparty setup | Onboarding | Master Data → Counterparty |
+| Entity-Counterparty mapping | Onboarding | Master Data → Entity-Counterparty |
 | Netting agreement | If repo trading | Agreements → Netting |
 | Security Master | New bond issue | Master Data → Securities |
 | Haircut config | If repo eligible | Haircut Matrix |
 | Initial price | Before trading | Market Data → Prices |
 | Daily ThaiBMA import | Every working day 17:00 | Market Data → Import |
+| Index rate upload | Daily ~11:00 AM | Market Data → Rates |
 
 ### Credit Risk Team
 | Task | When |
 |------|------|
 | Credit assessment | After entity setup |
 | Rating verification | Ongoing |
-
-### Middle Office
-| Task | When | System |
-|------|------|--------|
-| Limit configuration | After credit approval | Limits → Configure |
 
 ### Compliance
 | Task | When |
@@ -429,32 +715,56 @@
 | Final approval | Before trading |
 
 ### IT Admin
-| Task | When |
-|------|------|
-| System configuration | One-time setup |
-| API configuration | Per new security |
-| Technical support | As needed |
+| Task | When | System |
+|------|------|--------|
+| Portfolio creation | Before trading begins | Master Data → Portfolios |
+| System configuration | One-time setup | - |
+| API configuration | Per new security | - |
+| Technical support | As needed | - |
+
+### Middle Office
+| Task | When | System |
+|------|------|--------|
+| Limit configuration | After credit approval | Limits → Configure |
+| Entity-Counterparty mapping review | Onboarding | Master Data → Entity-Counterparty |
 
 ---
 
 ## Checklists
 
 ### Client Onboarding Checklist
-- [ ] Entity created in `entity_master`
+- [ ] Entity created in `entity_master` (with industry_sector, g_sib_type)
 - [ ] Counterparty created in `counterparty_master`
+- [ ] Entity-Counterparty mapping created
 - [ ] Credit risk assessment completed
-- [ ] Limits configured
-- [ ] Netting agreement (if repo)
+- [ ] Limits configured (PLACEMENT_LIMIT, REPO_LIMIT, SINGLE_TXN, TENOR, CONCENTRATION)
+- [ ] Netting agreement (if repo trading)
 - [ ] KYC status = 'APPROVED'
 - [ ] Front Office notified
 
 ### Bond Setup Checklist
-- [ ] Security Master record created
-- [ ] All terms validated (dates, rates)
+- [ ] Security Master record created (with cross_default flag)
+- [ ] All terms validated (dates, rates, coupon_rate_type)
 - [ ] Haircut configured (if repo eligible)
 - [ ] IT configuration complete
 - [ ] Initial price imported
 - [ ] Available for trade entry
+
+### Portfolio Setup Checklist
+- [ ] Portfolio created in `portfolio_master`
+- [ ] Accounting treatment defined (AMC/FVOCI/FVTPL)
+- [ ] Portfolio manager assigned
+- [ ] Treasury approval obtained
+- [ ] Available for trade entry
+
+### Daily Market Data Checklist
+- [ ] THOR/THORA rates downloaded (~11:00 AM)
+- [ ] Rates validated and imported
+- [ ] ThaiBMA EOD prices downloaded (17:00)
+- [ ] Price validation completed
+- [ ] Prices imported to system
+- [ ] EOD batch completed successfully (18:00-19:30)
+- [ ] Exception reports reviewed
 
 ---
 
@@ -471,5 +781,5 @@
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** February 3, 2026  
+**Last Updated:** February 5, 2026  
 **Next Review:** After first month of go-live
