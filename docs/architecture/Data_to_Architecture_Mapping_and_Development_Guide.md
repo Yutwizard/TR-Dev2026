@@ -110,71 +110,62 @@
 #### Core Tables: `bond_trades`, `repo_trades`, `interbank_deals`
 
 ```sql
--- Trade Execution Entity Relationship
+-- Trade Execution Entity Relationship (Aligned with Database Design)
 CREATE TABLE bond_trades (
-    TradeID VARCHAR(40) PRIMARY KEY,
-    PortfolioID VARCHAR(40) REFERENCES portfolio_master,
-    SecurityID VARCHAR(10) REFERENCES security_master,
-    counterparty_id VARCHAR(40) REFERENCES counterparty_master,
-    TradeType ENUM('BUY', 'SELL'),
-    TradeDate DATE,
-    SettlementDate DATE,  -- T+2 calculation
-    NominalAmount DECIMAL(20,2),
-    CleanPrice DECIMAL(10,6),
-    AccruedInterest DECIMAL(20,2),
-    DirtyPrice DECIMAL(10,6),
-    SettlementAmount DECIMAL(20,2),
-    Yield DECIMAL(10,6),
-    SettlementSystem ENUM('TSD', 'BAHTNET'),
-    TraderID VARCHAR(20),
-    Status ENUM('CREATED', 'PENDING_APPROVAL', 'APPROVED', 'CONFIRMED', 'SETTLED', 'CANCELLED'),
-    ApprovedBy VARCHAR(20),
-    ApprovedAt TIMESTAMP,
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt TIMESTAMP,
-    ThaiBMA_Reported BOOLEAN DEFAULT FALSE,
-    ThaiBMA_ReportedAt TIMESTAMP
+    bond_trade_id VARCHAR(40) PRIMARY KEY,
+    portfolio_id VARCHAR(40) REFERENCES portfolio_master(portfolio_id),
+    security_id VARCHAR(10) REFERENCES security_master(security_id),
+    counterparty_id VARCHAR(40) REFERENCES counterparty_master(counterparty_id),
+    trade_type VARCHAR(10),  -- 'Buy' or 'Sell'
+    trade_date DATE,
+    settlement_date DATE,  -- T+2 calculation
+    nominal_amount DECIMAL(20,2),
+    clean_price_trade DECIMAL(18,6),
+    yield_to_maturity DECIMAL(10,6),  -- System calculated
+    settlement_status VARCHAR(20),  -- 'Pending', 'Settled', 'Failed'
+    trader_id VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- Note: ThaiBMA reporting tracked in bond_transactions table
 );
 ```
 
 **Architecture Alignment:**
-- ✅ OTC Trade Capture: `bond_trades` with all pricing fields
-- ✅ Order Management: `Status` field with workflow states
-- ✅ ThaiBMA Reporting: `ThaiBMA_Reported` flag + timestamp
-- ✅ Four-Eyes: `ApprovedBy`, `ApprovedAt` fields
+- ✅ OTC Trade Capture: `bond_trades` with pricing fields
+- ✅ Order Management: `settlement_status` field with workflow states
+- ✅ ThaiBMA Reporting: Tracked in `bond_transactions` table
+- ✅ Four-Eyes: Approval workflow via `bond_transactions` or separate audit table
+- **Note:** Uses `snake_case` naming convention per database design standard
 
 ---
 
 #### Limit Checking: `limit_utilization`
 
 ```sql
+-- Limit Utilization (Aligned with Database Design)
 CREATE TABLE limit_utilization (
-    UtilizationID BIGINT AUTO_INCREMENT PRIMARY KEY,
-    LimitID VARCHAR(40),
-    counterparty_id VARCHAR(40),
-    entity_id VARCHAR(40),
-    LimitType ENUM('SINGLE_TXN', 'PLACEMENT_LIMIT', 'REPO_LIMIT', 'TENOR', 'CONCENTRATION'),
-    TransactionID VARCHAR(40),
-    TransactionType ENUM('INTERBANK_DEAL', 'REPO_TRADE', 'BOND_TRADE'),
-    LimitAmount DECIMAL(20,2),
-    UtilizedBefore DECIMAL(20,2),
-    TransactionAmount DECIMAL(20,2),
-    UtilizedAfter DECIMAL(20,2),
-    AvailableAfter DECIMAL(20,2),
-    UtilizationPercentAfter DECIMAL(5,2),
-    EventType ENUM('NEW_TRADE', 'MATURITY', 'CANCELLATION', 'AMENDMENT'),
-    Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CreatedBy VARCHAR(50),
-    -- Immutable: no UPDATE or DELETE allowed
-    INDEX idx_counterparty_timestamp (counterparty_id, Timestamp),
-    INDEX idx_limitid_timestamp (LimitID, Timestamp)
+    limit_id VARCHAR(40) PRIMARY KEY,
+    counterparty_id VARCHAR(40) REFERENCES counterparty_master(counterparty_id),
+    entity_id VARCHAR(40) REFERENCES entity_master(entity_id),
+    limit_type VARCHAR(20),  -- 'PLACEMENT_LIMIT', 'REPO_LIMIT', 'SINGLE_TXN', 'TENOR', 'CONCENTRATION'
+    currency CHAR(3) DEFAULT 'THB',
+    available_line DECIMAL(20,2),
+    total_credit_line DECIMAL(20,2),
+    utilization_amount DECIMAL(20,2),  -- Positive = consume, Negative = release
+    credit_line_approve_date DATE,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_date DATE,
+    -- Immutable: append-only, no UPDATE or DELETE allowed
+    INDEX idx_counterparty_timestamp (counterparty_id, timestamp),
+    INDEX idx_limitid_timestamp (limit_id, timestamp)
 );
 ```
 
 **Architecture Alignment:**
-- ✅ Real-time limit checking: Query latest by LimitID
-- ✅ Immutable audit: Append-only design
-- ✅ Pre-trade validation: Check AvailableBefore >= TransactionAmount
+- ✅ Real-time limit checking: Query latest by counterparty_id + limit_type
+- ✅ Immutable audit: Append-only design (no UPDATE/DELETE)
+- ✅ Pre-trade validation: Check available_line >= proposed_trade_amount
+- **Note:** Single `limit_id` field (removed separate UtilizationID concept)
+- **Note:** Uses `snake_case` naming convention per database design
 
 ---
 
@@ -183,58 +174,55 @@ CREATE TABLE limit_utilization (
 #### Core Tables: `repo_trades`, `collateral_positions`, `margin_calls`
 
 ```sql
--- Repo Trade with Settlement Fields
+-- Repo Trade with Settlement Fields (Aligned with Database Design)
 CREATE TABLE repo_trades (
-    RepoTradeID VARCHAR(40) PRIMARY KEY,
-    counterparty_id VARCHAR(40) REFERENCES counterparty_master,
-    NettingAgreementID VARCHAR(40) REFERENCES netting_agreement,
-    LimitID VARCHAR(40),
-    entity_id VARCHAR(40),
-    trade_type ENUM('REPO', 'REVERSE_REPO'),  -- Bank perspective
-    trade_date DATE,
-    value_date DATE,
-    maturity_date DATE,
-    tenor_days INT GENERATED ALWAYS AS (DATEDIFF(maturity_date, value_date)) STORED,
+    repo_trade_id VARCHAR(40) PRIMARY KEY,
+    counterparty_id VARCHAR(40) REFERENCES counterparty_master(counterparty_id),
+    netting_agreement_id VARCHAR(40) REFERENCES netting_agreement(netting_agreement_id),
+    entity_id VARCHAR(40) REFERENCES entity_master(entity_id),
+    trade_type VARCHAR(20),  -- 'Repo', 'ReverseRepo', 'Rehypothecation'
+    trade_date TIMESTAMP,  -- Execution timestamp GMT+7
+    purchase_date DATE,
+    repurchase_date DATE,
+    term INT,  -- Days between purchase and repurchase
     currency CHAR(3) DEFAULT 'THB',
-    nominal_amount DECIMAL(20,2),  -- Cash leg
-    repo_rate DECIMAL(7,4),
-    repo_rate_type ENUM('FIXED', 'FLOATING'),
-    haircut_percent DECIMAL(5,2),
-    collateral_market_value DECIMAL(20,2),
-    settlement_amount DECIMAL(20,2),  -- After haircut
-    open_repo_flag BOOLEAN DEFAULT FALSE,
-    call_date DATE,
-    settlement_system ENUM('BAHTNET', 'TSD'),
-    settlement_status ENUM('PENDING', 'SETTLED', 'FAILED', 'CANCELLED'),
-    bahtnet_reference VARCHAR(50),
-    status ENUM('OPEN', 'CLOSED', 'MATURED'),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
-    INDEX idx_counterparty_status (counterparty_id, status),
-    INDEX idx_maturity_date (maturity_date)
+    nominal_amount DECIMAL(20,2),  -- Face value of securities
+    purchase_price DECIMAL(20,2),  -- Cash on day 1
+    repurchase_price DECIMAL(20,2),  -- Cash on day 2 (includes interest)
+    interest_rate_type VARCHAR(10),  -- 'Fixed' or 'Floating'
+    interest_rate DECIMAL(10,6),
+    reference_rate VARCHAR(20),  -- THOR, THORA, SOFR, FIX
+    margin DECIMAL(10,6),  -- Spread for floating
+    day_count_convention VARCHAR(20),  -- ACT/365, etc.
+    repo_rate DECIMAL(10,6),  -- Implied repo rate
+    accrued_interest DECIMAL(20,2),  -- Interest accrued to date
+    status VARCHAR(20),  -- 'Active', 'Matured', 'In-Default'
+    limit_id VARCHAR(40),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Collateral Allocation
+-- Collateral Allocation (Aligned with Database Design)
 CREATE TABLE collateral_positions (
-    CollateralID VARCHAR(40) PRIMARY KEY,
-    RepoTradeID VARCHAR(40) REFERENCES repo_trades,
-    SecurityID VARCHAR(10) REFERENCES security_master,
-    collateral_quantity DECIMAL(20,2),
-    market_value DECIMAL(20,2),  -- MTM from ThaiBMA
-    haircut_applied DECIMAL(5,2),
-    margin_value DECIMAL(20,2),  -- market_value * (1 - haircut)
+    collateral_id VARCHAR(20) PRIMARY KEY,  -- RepoTradeID_SecurityID_seq
+    repo_trade_id VARCHAR(40) REFERENCES repo_trades(repo_trade_id),
+    security_id VARCHAR(10) REFERENCES security_master(security_id),
+    nominal_amount DECIMAL(20,2),  -- Face value pledged
     allocation_date DATE,
-    release_date DATE,
-    status ENUM('ALLOCATED', 'SUBSTITUTED', 'RELEASED'),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    valuation_price DECIMAL(18,6),  -- Clean price at last MTM
+    market_value DECIMAL(20,2),  -- Nominal × Price + Accrued
+    haircut_percentage DECIMAL(5,2),
+    collateral_value_after_haircut DECIMAL(20,2),  -- Market value × (1 - Haircut)
+    margin_call_id INT,  -- Links if from margin call
+    currency CHAR(3) DEFAULT 'THB'
 );
 ```
 
 **Architecture Alignment:**
-- ✅ Repo Lifecycle: `status` tracks OPEN → CLOSED/MATURED
+- ✅ Repo Lifecycle: `status` tracks Active → Matured
 - ✅ Collateral Management: Separate table with MTM tracking
-- ✅ BAHTNET Integration: `bahtnet_reference`, `settlement_system`
-- ✅ Margin Calculation: `margin_value` = `market_value` * (1 - haircut)
+- ✅ Margin Calculation: `collateral_value_after_haircut` = Market value × (1 - haircut)
+- **Note:** Uses `snake_case` naming per database design
+- **Note:** No stored `tenor_days` - calculated in application or use `term` field
 
 ---
 
