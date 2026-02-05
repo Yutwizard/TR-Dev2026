@@ -25,18 +25,21 @@ Read in this exact order:
 |------|------|
 | **Feb 2** | Sprint 1-2: Backend implementation (94 APIs, 18 tables, 6 services) |
 | **Feb 3** | Design documentation (5 docs created) |
-| **Feb 5** | Documentation restructure (14 docs → 8 core docs) + Visual flow diagrams |
+| **Feb 5** | Documentation restructure + Field alignment + Interactive portal (10 flow categories) |
 
 ### Current Status
-- ✅ Sprint 1-2: Complete (Foundation + Bond Trading)
+- ✅ Sprint 1: Complete (Foundation - Master Data)
+- ✅ Sprint 2: Bond Trading Complete | Interbank & Repo: API Stubs Only
 - ✅ Documentation: Complete (Restructured)
-- ⏳ Sprint 3: Pending (Interbank + Repo)
+- ⏳ Sprint 3: Pending (Interbank + Repo Services)
 - ⏳ Stakeholder Review: Pending
+
+> ⚠️ **Important:** Interbank and Repo have working API endpoints but use MOCK data. See MISSING_SERVICES_BACKLOG.md for details.
 
 ### Current Git Branch
 ```
 main
-Latest: f537173 docs: Update PROJECT_SUMMARY.md with Feb 5 work
+Latest: b716f7c fix: Improve PDF export to include all flow diagrams and content
 ```
 
 ---
@@ -54,13 +57,16 @@ docs/
 │   └── FIELD_REFERENCE.md             ← Field definitions
 │
 ├── 02-PROCESSES/                      ← Business processes
-│   ├── TRANSACTION_WORKFLOWS.md       ← Text workflows
+│   ├── TRANSACTION_WORKFLOWS.md       ← Text workflows (272 fields mapped)
+│   ├── FIELD_WORKFLOW_MAPPING.md      ← Field-to-workflow mapping
 │   ├── PRE_TRANSACTION_SETUP.md       ← Onboarding/setup
-│   └── TRANSACTION_FLOW_DIAGRAMS.md   ← Visual diagrams
+│   ├── TRANSACTION_FLOW_DIAGRAMS.md   ← Visual diagrams
+│   └── transaction_flow.html          ← Interactive portal (10 flows)
 │
 ├── 03-IMPLEMENTATION/                 ← Developer docs
 │   ├── DEVELOPMENT_GUIDE.md           ← 10-week plan
-│   └── SETUP_INSTRUCTIONS.md          ← Local setup
+│   ├── SETUP_INSTRUCTIONS.md          ← Local setup
+│   └── MISSING_SERVICES_BACKLOG.md    ← Incomplete services tracker ← READ THIS
 │
 ├── 04-OPERATIONS/                     ← Operations docs
 │   ├── DAILY_OPERATIONS.md            ← Daily batch procedures
@@ -81,16 +87,17 @@ docs/
 4. Get sign-offs on STAKEHOLDER_CHECKLIST.md
 ```
 
-### Option 2: Continue Sprint 3 (Interbank + Repo)
+### Option 2: Continue Sprint 3 (Interbank + Repo Services)
 ```
-Files to create:
-- src/backend/app/services/interbank_service.py
-- src/backend/app/services/repo_service.py
-- src/backend/app/services/collateral_service.py
-- Update: app/routers/interbank.py
-- Update: app/routers/repo.py
+Files to create (see MISSING_SERVICES_BACKLOG.md for full specs):
+- src/backend/app/services/interbank_service.py    ← NEW
+- src/backend/app/services/repo_service.py         ← NEW  
+- src/backend/app/services/collateral_service.py   ← NEW
+- Update: app/routers/interbank.py                 ← Connect to real DB
+- Update: app/routers/repo.py                      ← Connect to real DB
 
-Timeline: Week 3-6 of 10-week plan (see DEVELOPMENT_GUIDE.md)
+Estimated: 6-9 days (1.5-2 weeks)
+Timeline: Week 3-4 of 10-week plan (see DEVELOPMENT_GUIDE.md)
 ```
 
 ### Option 3: Frontend Development
@@ -123,8 +130,8 @@ Timeline: Week 3-6 of 10-week plan (see DEVELOPMENT_GUIDE.md)
 | API Routes | 94 |
 | Database Tables | 18 |
 | Service Modules | 6 |
-| Documentation | 8 core documents |
-| Git Commits | 15+ |
+| Documentation | 10 core documents |
+| Git Commits | 18+ |
 | Sprints Complete | 2 of 6 |
 
 ---
@@ -136,6 +143,7 @@ Timeline: Week 3-6 of 10-week plan (see DEVELOPMENT_GUIDE.md)
 | Source Excel | `data/source/Treasury_System_Database_V2_Internal.xlsx` |
 | Extracted Tables | `data/extracted/table_structures.md` |
 | Backend Code | `src/backend/` |
+| Interactive Portal | `docs/02-PROCESSES/transaction_flow.html` |
 
 ---
 

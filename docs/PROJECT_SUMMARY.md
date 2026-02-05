@@ -112,7 +112,7 @@ cd src/backend
 - Realized/Unrealized P&L
 - EOD job: `run_eod_position_process(db, market_prices)`
 
-#### Bond Trades API Endpoints (13 endpoints)
+#### Bond Trades API Endpoints (13 endpoints - Full Implementation)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET/POST | `/api/v1/bond-trades` | List/Create trades |
@@ -123,6 +123,29 @@ cd src/backend
 | GET | `/api/v1/bond-trades/settlement/today` | Today's settlements |
 | POST | `/api/v1/bond-trades/{id}/settle` | Mark settled |
 | POST | `/api/v1/bond-trades/{id}/thaibma-report` | Report to ThaiBMA |
+
+---
+
+### ⚠️ Sprint 2 Partial: Interbank & Repo (API Stubs Only)
+
+> **Status:** SQLAlchemy models exist, routers use MOCK data, services NOT implemented
+
+#### What's Implemented
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `InterbankDeal` Model | ✅ Complete | Full SQLAlchemy model |
+| `RepoTrade` Model | ✅ Complete | Full SQLAlchemy model |
+| `interbank.py` Router | ⚠️ Stub | Mock data only |
+| `repo.py` Router | ⚠️ Stub | Mock data only |
+
+#### What's Missing (See Backlog Below)
+| Component | Priority | Effort |
+|-----------|----------|--------|
+| `interbank_service.py` | High | 1-2 days |
+| `repo_service.py` | High | 1-2 days |
+| `collateral_service.py` | High | 1-2 days |
+| Daily accrual batch job | Medium | 1 day |
+| Margin call workflow | Medium | 1-2 days |
 
 ---
 

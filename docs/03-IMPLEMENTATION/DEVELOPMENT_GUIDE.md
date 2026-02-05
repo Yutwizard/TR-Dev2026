@@ -124,39 +124,52 @@ See [System Design](../01-DESIGN/SYSTEM_DESIGN.md) for full database documentati
 
 ---
 
-### Phase 2: Bond Trading (Week 2)
+### Phase 2: Bond Trading (Week 2) ✅ COMPLETE
 **Goal:** Full bond buy/sell workflow
 
-| Day | Task | Deliverable |
-|-----|------|-------------|
-| 1 | Trade model | bond_trades with T+2 |
-| 2 | Trade API | POST with validation |
-| 3 | Approval workflow | Four-eyes approval |
-| 4 | ThaiBMA reporting | Auto-reporting |
-| 5 | Settlement | Status workflow |
+| Day | Task | Deliverable | Status |
+|-----|------|-------------|--------|
+| 1 | Trade model | bond_trades with T+2 | ✅ Complete |
+| 2 | Trade API | POST with validation | ✅ Complete |
+| 3 | Approval workflow | Four-eyes approval | ✅ Complete |
+| 4 | ThaiBMA reporting | Auto-reporting | ✅ Complete |
+| 5 | Settlement | Status workflow | ✅ Complete |
+
+**Output:** Full production-ready bond trading module
 
 ---
 
-### Phase 3: Interbank (Week 3-4)
+### Phase 3: Interbank (Week 3-4) 🔄 NOT STARTED
 **Goal:** Lending/borrowing with THOR
 
-| Day | Task | Deliverable |
-|-----|------|-------------|
-| 1-2 | Interbank model | Deals + schedule |
-| 3-4 | Interest calc | ACT/365 daily accrual |
-| 5-7 | Maturity | Auto-maturity processing |
+> **Current Status:** Models exist, routers use mock data
+
+| Day | Task | Deliverable | Status |
+|-----|------|-------------|--------|
+| 1 | Interbank service | `interbank_service.py` | ❌ Not started |
+| 2 | Interest calc | ACT/365 daily accrual | ❌ Not started |
+| 3 | Router update | Connect to real DB | ❌ Not started |
+| 4 | Maturity | Auto-maturity processing | ❌ Not started |
+| 5 | Testing | End-to-end validation | ❌ Not started |
+
+**Dependencies:** Phase 2 complete
 
 ---
 
-### Phase 4: Repo (Week 5-6)
+### Phase 4: Repo (Week 5-6) 🔄 NOT STARTED
 **Goal:** Repo/RRP with collateral
 
-| Day | Task | Deliverable |
-|-----|------|-------------|
-| 1-2 | Repo model | Near/far leg |
-| 3-4 | Collateral | Allocation + haircut |
-| 5-7 | Margin calls | Daily MTM workflow |
-| 8-10 | Substitution | Collateral swap |
+> **Current Status:** Models exist, routers use mock data
+
+| Day | Task | Deliverable | Status |
+|-----|------|-------------|--------|
+| 1 | Repo service | `repo_service.py` | ❌ Not started |
+| 2 | Collateral service | `collateral_service.py` | ❌ Not started |
+| 3 | Router update | Connect to real DB | ❌ Not started |
+| 4 | Margin calls | Daily MTM workflow | ❌ Not started |
+| 5 | Substitution | Collateral swap | ❌ Not started |
+
+**Dependencies:** Phase 3 complete |
 
 ---
 
