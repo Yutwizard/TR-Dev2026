@@ -338,7 +338,7 @@ The Excel file contains a comprehensive data model designed to support a Thai Co
 | LimitID | PK |
 | counterparty_id | FK |
 | entity_id | FK |
-| LimitType | SINGLE_TXN, AGGREGATE, TENOR, CONCENTRATION |
+| LimitType | SINGLE_TXN, PLACEMENT_LIMIT, REPO_LIMIT, TENOR, CONCENTRATION |
 | LimitAmount | Approved limit |
 | UtilizedAmount | Current usage |
 | AvailableAmount | Remaining |

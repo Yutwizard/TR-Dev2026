@@ -153,7 +153,7 @@ CREATE TABLE limit_utilization (
     LimitID VARCHAR(40),
     counterparty_id VARCHAR(40),
     entity_id VARCHAR(40),
-    LimitType ENUM('SINGLE_TXN', 'AGGREGATE', 'TENOR', 'CONCENTRATION', 'REPO'),
+    LimitType ENUM('SINGLE_TXN', 'PLACEMENT_LIMIT', 'REPO_LIMIT', 'TENOR', 'CONCENTRATION'),
     TransactionID VARCHAR(40),
     TransactionType ENUM('INTERBANK_DEAL', 'REPO_TRADE', 'BOND_TRADE'),
     LimitAmount DECIMAL(20,2),
@@ -690,7 +690,7 @@ def pre_trade_limit_check(counterparty_id, transaction_amount, transaction_type)
         SELECT LimitID, AvailableAfter, LimitAmount
         FROM limit_utilization
         WHERE counterparty_id = %s
-          AND LimitType = 'AGGREGATE'
+          AND LimitType IN ('PLACEMENT_LIMIT', 'REPO_LIMIT')
         ORDER BY Timestamp DESC
         LIMIT 1
     """, counterparty_id)

@@ -106,11 +106,11 @@
 |------------|-------------|--------------|-------|
 | `SINGLE_TXN` | Maximum single transaction | Pre-trade | `limit_utilization` |
 | `FOUR_EYES` | Mandatory second approval | All trades | `bond_trades`, `interbank_deals`, `repo_trades` |
-| `AGGREGATE` | Total exposure per counterparty | Pre-trade + daily | `limit_utilization` |
+| `REPO_LIMIT` | Repo/Reverse Repo trading limit | Pre-trade | `limit_utilization` |
+| `PLACEMENT_LIMIT` | Interbank lending/borrowing limit | Pre-trade | `limit_utilization` |
+| `SINGLE_TXN` | Maximum single transaction amount | Pre-trade | `limit_utilization` |
 | `TENOR` | Maximum maturity allowed | Pre-trade | `limit_utilization` |
-| `CONCENTRATION` | Sector/issuer limits | Daily monitoring | `limit_utilization` |
-| `REPO_LIMIT` | Repo-specific limits | Pre-trade | `limit_utilization` |
-| `PLACEMENT_LIMIT` | Interbank placement limits | Pre-trade | `limit_utilization` |
+| `CONCENTRATION` | Sector/issuer concentration limits | Daily monitoring | `limit_utilization` |
 
 #### Limit Utilization Record Structure (from Excel):
 

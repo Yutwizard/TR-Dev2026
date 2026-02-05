@@ -234,7 +234,7 @@ This document provides a comprehensive architecture analysis and step-by-step im
 |-----------|----------|
 | OTC Trade Capture | Voice-brokered transaction entry with validation |
 | Order Management | Workflow routing (Created → Approved → Executed → Confirmed) |
-| Counterparty Limit | Real-time limit checking (single txn, aggregate, tenor-based) |
+| Counterparty Limit | Real-time limit checking (single txn, product-specific, tenor-based) |
 | Price Discovery | Market data integration (ThaiBMA, Bloomberg, Reuters) |
 | ThaiBMA Reporting | Automated 30-minute trade reporting obligation |
 
@@ -384,7 +384,8 @@ This document provides a comprehensive architecture analysis and step-by-step im
 │ tsd_account            │ TSD settlement account                 │
 │ bahtnet_account        │ BAHTNET account                        │
 │ single_txn_limit       │ Maximum single transaction             │
-│ aggregate_limit        │ Maximum total exposure                 │
+│ repo_limit             │ Maximum repo exposure                  │
+│ placement_limit        │ Maximum interbank exposure             │
 │ tenor_limit_days       │ Maximum tenor allowed                  │
 │ created_at             │ Timestamp                              │
 └─────────────────────────────────────────────────────────────────┘
@@ -655,7 +656,7 @@ Transmission → Acknowledgment Receipt → Exception Handling (if needed)
 - [ ] Settlement account details (TSD, BAHTNET)
 - [ ] Limit structure definition
   - Single transaction limits
-  - Aggregate exposure limits
+  - Product-specific exposure limits (REPO_LIMIT, PLACEMENT_LIMIT)
   - Tenor limits
   - Concentration limits
 
@@ -768,7 +769,7 @@ CANCELLED   REJECTED       REJECTED
   - Repo exposures (collateral-adjusted)
 - [ ] Limit types implementation
   - Single transaction limit
-  - Counterparty aggregate exposure limit
+  - Counterparty product-specific exposure limits
   - Tenor-based limits (by maturity bucket)
   - Concentration limits (issuer, sector, rating)
   - Repo-specific limits (cash vs collateral)

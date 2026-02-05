@@ -53,7 +53,8 @@
 | Item | Description | Status | Comments |
 |------|-------------|--------|----------|
 | Four-Eyes Approval | ALL transactions require second approval (no threshold) | [ ] Approved | ⚠️ Confirm this is correct |
-| Limit Types | SINGLE_TXN, AGGREGATE, TENOR, CONCENTRATION, REPO_LIMIT, PLACEMENT_LIMIT | [ ] Approved | |
+| Limit Types | SINGLE_TXN, REPO_LIMIT, PLACEMENT_LIMIT, TENOR, CONCENTRATION | [ ] Approved | |
+| **Note** | Limits controlled at product level (REPO_LIMIT, PLACEMENT_LIMIT), no aggregate limit | [ ] Understood | |
 | Alert Thresholds | 80% warning, 90% high warning, 100% hard block | [ ] Approved | |
 | Margin Call Workflow | Pending → Agreed → Settled (with due_time T+1 11:00) | [ ] Approved | |
 | Limit Utilization Log | Immutable audit trail (append-only) | [ ] Approved | |

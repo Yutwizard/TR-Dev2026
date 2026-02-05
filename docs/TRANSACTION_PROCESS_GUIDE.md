@@ -116,7 +116,7 @@ Register a new bank or financial institution as a counterparty for trading.
 
 | # | Action | Fields to Input/Update | Notes |
 |---|--------|------------------------|-------|
-| 4.1 | 👤 Define limit types | `limit_type` | PLACEMENT_LIMIT, REPO_LIMIT, etc. |
+| 4.1 | 👤 Define limit types | `limit_type` | PLACEMENT_LIMIT, REPO_LIMIT, SINGLE_TXN, TENOR |
 | 4.2 | 👤 Input credit line | `total_credit_line` | Approved amount |
 | 4.3 | 👤 Set currency | `currency` | THB |
 | 4.4 | 👤 Set approval date | `credit_line_approve_date` | Committee approval date |
@@ -127,11 +127,12 @@ Register a new bank or financial institution as a counterparty for trading.
 **Limit Types:**
 | Type | Purpose | Applies To |
 |------|---------|------------|
-| PLACEMENT_LIMIT | Interbank lending | Interbank deals |
-| REPO_LIMIT | Repo trading | Repo trades |
-| SINGLE_TXN | Max single transaction | All trades |
-| AGGREGATE | Total exposure | All products |
-| TENOR | Maximum maturity | All trades |
+| PLACEMENT_LIMIT | Interbank lending/borrowing | Interbank deals |
+| REPO_LIMIT | Repo/Reverse Repo trading | Repo trades |
+| SINGLE_TXN | Maximum single transaction | All trades |
+| TENOR | Maximum maturity allowed | All trades |
+
+> **Limit Control:** Limits are enforced at product level (PLACEMENT_LIMIT for interbank, REPO_LIMIT for repo). No cross-product aggregate limit is used.
 | CONCENTRATION | Sector limits | Portfolio level |
 
 **Tables Updated:**

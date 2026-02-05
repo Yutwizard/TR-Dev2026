@@ -134,11 +134,12 @@
 
 | Limit Type | Purpose | Typical Limit |
 |------------|---------|---------------|
-| PLACEMENT_LIMIT | Interbank lending | 2,000,000,000 THB |
-| REPO_LIMIT | Repo trading | 1,000,000,000 THB |
-| SINGLE_TXN | Max single trade | 500,000,000 THB |
-| AGGREGATE | Total exposure | 3,000,000,000 THB |
-| TENOR | Max maturity | 365 days |
+| PLACEMENT_LIMIT | Interbank lending/borrowing | 2,000,000,000 THB |
+| REPO_LIMIT | Repo/Reverse Repo trading | 1,000,000,000 THB |
+| SINGLE_TXN | Maximum single transaction | 500,000,000 THB |
+| TENOR | Maximum maturity allowed | 365 days |
+
+> **Note:** Limits are controlled at product level (PLACEMENT_LIMIT for interbank, REPO_LIMIT for repo). There is no aggregate cross-product limit.
 
 4. Input fields:
    - `total_credit_line`: Approved amount
