@@ -220,13 +220,45 @@
                         { title: "Standard Onboarding Timeline", code: `gantt\n    title Client Onboarding Timeline (3-5 Business Days)\n    dateFormat YYYY-MM-DD\n    section Back Office\n        Entity Setup            :a1, 2026-02-01, 1d\n        Counterparty Setup      :a2, after a1, 1d\n        Netting Agreement       :a5, after a4, 1d\n    section Credit Risk\n        Credit Assessment       :a3, after a2, 2d\n    section Middle Office\n        Limit Configuration     :a4, after a3, 1d\n    section Compliance\n        KYC Approval            :a6, after a5, 1d` }
                     ]
                 },
+                portfolio: {
+                    id: 'portfolio',
+                    title: "Portfolio Setup Flow",
+                    icon: Icons.PlusCircle,
+                    description: "Create trading portfolios with accounting classification (AMC, FVOCI, FVTPL) before trading begins.",
+                    charts: [
+                        { title: "Portfolio Creation Workflow", code: `flowchart TD\n    Start([Start]) --> P1["Step 1: Portfolio Creation\\nIT Admin"]\n    P1 --> P2["Step 2: Input Portfolio Details\\n- portfolio_name\\n- portfolio_manager\\n- accounting_treatment"]\n    P2 --> P3["Step 3: Treasury Approval\\nAccounting treatment requires approval"]\n    P3 -->|Approved| P4["Step 4: System Generation\\n- portfolio_id\\n- created_timestamp"]\n    P3 -->|Rejected| Reject["❌ Rejected"]\n    P4 --> End([✅ Ready for Trading])\n    Reject --> End2([❌ Setup Failed])` },
+                        { title: "Accounting Treatment Options", code: `flowchart LR\n    subgraph "Accounting Classifications"\n        AMC["AMC\\nAmortized Cost"]\n        FVOCI["FVOCI\\nFair Value through OCI"]\n        FVTPL["FVTPL\\nFair Value through P&L"]\n    end\n    subgraph "P&L Recognition"\n        AMC_P["Accrued interest only\\nNo MTM"]\n        FVOCI_P["MTM to OCI\\nRealized P&L to P&L"]\n        FVTPL_P["All MTM & Realized\\nto P&L"]\n    end\n    AMC --> AMC_P\n    FVOCI --> FVOCI_P\n    FVTPL --> FVTPL_P` }
+                    ]
+                },
+                entity_mapping: {
+                    id: 'entity_mapping',
+                    title: "Entity-Counterparty Mapping",
+                    icon: Icons.UserPlus,
+                    description: "Establish relationship links between entities and counterparties for consolidated limit management and BOT DER_CPEN reporting.",
+                    charts: [
+                        { title: "Entity-Counterparty Mapping Workflow", code: `flowchart TD\n    Start([Start]) --> M1["Step 1: Select Entity\\nFrom entity_master"]\n    M1 --> M2["Step 2: Select Counterparty\\nFrom counterparty_master"]\n    M2 --> M3["Step 3: Input Mapping Details\\n- parent_limit_id\\n- effective_from\\n- effective_to\\n- status\\n- remark"]\n    M3 --> M4["Step 4: System Generation\\n- entity_counterparty_id\\n- created_date\\n- last_updated_date"]\n    M4 --> End([✅ Mapping Complete])\n    \n    subgraph "Purpose"\n        P1["Consolidated Limit Management"]\n        P2["BOT DER_CPEN Reporting"]\n        P3["Entity Group Exposure"]\n    end\n    End --> P1\n    End --> P2\n    End --> P3` }
+                    ]
+                },
                 operations: {
                     id: 'operations',
                     title: "Daily Operations Flow",
                     icon: Icons.Clock,
-                    description: "Summary of the market-day lifecycle and periodic price import routines.",
+                    description: "Complete market-day lifecycle including ThaiBMA price import, index rate upload, and EOD batch processing with validation thresholds.",
                     charts: [
-                        { title: "Daily Operational Timeline", code: `flowchart TD\n    subgraph "Morning (08:00-09:00)"\n        AM1["Pre-Market Checks"]\n        AM2["System Health Check"]\n        AM3["Previous Day Reconciliation"]\n    end\n    subgraph "Market Hours (09:00-17:00)"\n        MH1["Settlement Processing"]\n        MH2["Collateral Management"]\n        MH3["Trading Support"]\n    end\n    subgraph "Post-Market Normal Day (17:00-19:30)"\n        PM1["17:00: Download ThaiBMA"]\n        PM2["17:15: Validate Prices"]\n        PM3["17:30: Import Prices"]\n        PM4["18:00: Accrued Interest Calc"]\n        PM5["18:30: Position Build"]\n        PM6["19:00: MTM Valuation"]\n        PM7["19:30: GL Journals"]\n    end\n    AM1 --> AM2 --> AM3 --> MH1 --> MH2 --> MH3\n    MH3 --> PM1 --> PM2 --> PM3 --> PM4 --> PM5 --> PM6 --> PM7` }
+                        { title: "Daily Operational Timeline", code: `flowchart TD\n    subgraph "Morning (08:00-09:00)"\n        AM1["Pre-Market Checks"]\n        AM2["System Health Check"]\n        AM3["Previous Day Reconciliation"]\n    end\n    subgraph "Market Hours (09:00-17:00)"\n        MH1["Settlement Processing"]\n        MH2["Collateral Management"]\n        MH3["Trading Support"]\n    end\n    subgraph "Post-Market Normal Day (17:00-19:30)"\n        PM1["17:00: Download ThaiBMA"]\n        PM2["17:15: Validate Prices"]\n        PM3["17:30: Import Prices"]\n        PM4["18:00: Accrued Interest Calc"]\n        PM5["18:30: Position Build"]\n        PM6["19:00: MTM Valuation"]\n        PM7["19:30: GL Journals"]\n    end\n    subgraph "Post-Market Month-End (17:30-19:50)"\n        ME1["17:30-18:00: Monitor ThaiBMA"]\n        ME2["18:15: Import Prices"]\n        ME3["18:30: Batch Start"]\n        ME4["19:50: Complete"]\n    end\n    AM1 --> AM2 --> AM3 --> MH1 --> MH2 --> MH3\n    MH3 --> PM1 --> PM2 --> PM3 --> PM4 --> PM5 --> PM6 --> PM7\n    MH3 -.->|Month-End| ME1 --> ME2 --> ME3 --> ME4` },
+                        { title: "Price Validation Thresholds", code: `flowchart TD\n    subgraph "Price Movement Validation"\n        V1["Compare to Previous Day"]\n        V2{"±5% to ±10%?"}\n        V3{"±10% to ±20%?"}\n        V4{"> ±20%?"}\n    end\n    subgraph "Actions"\n        A1["⚠️ Warning Flag\\nContinue Processing"]\n        A2["🚨 Alert + MO Confirmation\\nMiddle Office Approval Required"]\n        A3["🛑 Hard Stop\\nRisk Manager Investigation"]\n        A4["✅ Normal Processing"]\n    end\n    V1 --> V2\n    V2 -->|Yes| A1\n    V2 -->|No| V3\n    V3 -->|Yes| A2\n    V3 -->|No| V4\n    V4 -->|Yes| A3\n    V4 -->|No| A4` },
+                        { title: "Index Rate Upload (THOR/THORA)", code: `flowchart TD\n    subgraph "Daily Rate Download (~11:00 AM)"\n        R1["Download THOR"]\n        R2["Download THORA"]\n        R3["Verify vs Previous\\n±50bp threshold"]\n        R4["✅ Validate Rate"]\n    end\n    subgraph "Rate Import"\n        I1["Import to System"]\n        I2["Update reset_rate"]\n        I3["Calculate interest_rate\\n= ResetRate + Margin"]\n        I4["Update Floating Deals"]\n    end\n    subgraph "Notification"\n        N1["📧 Notify Front Office"]\n        N2["📧 Notify Counterparties"]\n    end\n    R1 --> R2 --> R3 --> R4 --> I1 --> I2 --> I3 --> I4 --> N1 --> N2` }
+                    ]
+                },
+                scheduled: {
+                    id: 'scheduled',
+                    title: "Scheduled Events",
+                    icon: Icons.Clock,
+                    description: "System-driven events including coupon payments, bond maturities, and transaction lifecycle processes.",
+                    charts: [
+                        { title: "Coupon Payment Process", code: `flowchart TD\n    subgraph "Trigger: CURRENT_DATE = coupon_date"\n        C1["⚙️ Identify Positions\\nAll with coupon today"]\n        C2["⚙️ Calculate Coupon\\nNominal × CouponRate × Frequency"]\n        C3["⚙️ Create Transaction\\ntrade_type = 'Coupon'\\ntrade_id = CPN_ prefix"]\n        C4["⚙️ Reset Accrued Interest\\nbond_positions.accrued_interest = 0"]\n        C5["⚙️ Update last_coupon_date"]\n        C6["👤 Verify Receipt\\nBack Office confirmation"]\n        C7["⚙️ Generate GL Entries"]\n    end\n    C1 --> C2 --> C3 --> C4 --> C5 --> C6 --> C7` },
+                        { title: "Bond Maturity Process", code: `flowchart TD\n    subgraph "Trigger: CURRENT_DATE > maturity_date"\n        M1["⚙️ Identify Maturities"]\n        M2["⚙️ Update bond_positions.status\\nMATURED"]\n        M3["⚙️ Update bond_transactions.status\\nMATURED"]\n        M4["⚙️ Update security_master.status\\nMATURED"]\n        M5["👤 Confirm Redemption\\nVerify principal received"]\n        M6["⚙️ Final Position Close"]\n        M7["⚙️ Generate GL Entries"]\n    end\n    M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> M7` },
+                        { title: "Bond Transactions Lifecycle", code: `flowchart LR\n    subgraph "Transaction Types"\n        T1["Buy"]\n        T2["Sell"]\n        T3["Repo"]\n        T4["ReverseRepo"]\n        T5["Rehypothecation"]\n        T6["Coupon"]\n    end\n    subgraph "Daily Updates (18:00)"\n        D1["Update clean_price\\nFrom ThaiBMA"]\n        D2["Calculate market_value"]\n        D3["Calculate unrealized_gain_loss"]\n        D4["Update valuation_date"]\n    end\n    T1 --> D1\n    T2 --> D1\n    T3 --> D1\n    T4 --> D1\n    T5 --> D1\n    T6 --> D1\n    D1 --> D2 --> D3 --> D4` }
                     ]
                 },
                 reference: {
@@ -270,13 +302,19 @@
                                             onClick={()=> setActiveTab('onboarding')} />
                                             <SidebarItem icon={Icons.PlusCircle} label="New Bond Setup" isActive={activeTab==='bond_setup' } 
                                                 onClick={()=> setActiveTab('bond_setup')} />
-                                                <SidebarItem icon={Icons.Clock} label="Daily Operations" isActive={activeTab==='operations' } 
-                                                    onClick={()=> setActiveTab('operations')} />
+                                            <SidebarItem icon={Icons.PlusCircle} label="Portfolio Setup" isActive={activeTab==='portfolio' } 
+                                                onClick={()=> setActiveTab('portfolio')} />
+                                            <SidebarItem icon={Icons.UserPlus} label="Entity Mapping" isActive={activeTab==='entity_mapping' } 
+                                                onClick={()=> setActiveTab('entity_mapping')} />
+                                            <SidebarItem icon={Icons.Clock} label="Daily Operations" isActive={activeTab==='operations' } 
+                                                onClick={()=> setActiveTab('operations')} />
+                                            <SidebarItem icon={Icons.Clock} label="Scheduled Events" isActive={activeTab==='scheduled' } 
+                                                onClick={()=> setActiveTab('scheduled')} />
 
-                                                    <div 
-                                                        className="px-4 py-3 mt-auto text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Resources</div>
-                                                    <SidebarItem icon={Icons.Info} label="Legend & Terms" isActive={activeTab==='reference' } 
-                                                        onClick={()=> setActiveTab('reference')} />
+                                            <div 
+                                                className="px-4 py-3 mt-auto text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Resources</div>
+                                            <SidebarItem icon={Icons.Info} label="Legend & Terms" isActive={activeTab==='reference' } 
+                                                onClick={()=> setActiveTab('reference')} />
                         </nav>
 
                         <div className="p-4 border-t border-slate-100 bg-slate-50/50">
