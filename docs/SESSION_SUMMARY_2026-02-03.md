@@ -8,6 +8,8 @@
 
 Today we focused on **detailed design documentation** based on the actual Excel source data. We extracted table structures, defined team responsibilities, and documented the daily operational processes including accrued interest calculations and ThaiBMA market data updates.
 
+> **📄 Combined Summary:** For a consolidated view of both Feb 2-3 work, see **[PROJECT_SESSION_SUMMARY.md](./PROJECT_SESSION_SUMMARY.md)**
+
 ---
 
 ## ✅ Completed Today
