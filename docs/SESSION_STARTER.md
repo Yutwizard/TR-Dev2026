@@ -31,10 +31,26 @@ Read in this exact order:
 - ✅ Sprint 1: Complete (Foundation - Master Data)
 - ✅ Sprint 2: Bond Trading Complete | Interbank & Repo: API Stubs Only
 - ✅ Documentation: Complete (Restructured)
+- ⏳ **Bond Process Review: In Progress** - Awaiting stakeholder feedback
 - ⏳ Sprint 3: Pending (Interbank + Repo Services)
 - ⏳ Stakeholder Review: Pending
 
-> ⚠️ **Important:** Interbank and Repo have working API endpoints but use MOCK data. See MISSING_SERVICES_BACKLOG.md for details.
+> ⚠️ **Important:** 
+> - Interbank and Repo have working API endpoints but use MOCK data. See MISSING_SERVICES_BACKLOG.md for details.
+> - **Bond process under review** - Additional tables/processes may be identified
+
+### Pending User Action
+```
+User is reviewing bond trading process with all related parties:
+- Front Office (Trading)
+- Middle Office (Risk)
+- Back Office (Settlement)
+
+Will report back any additional:
+- Database tables needed
+- Process steps missing
+- Workflow changes required
+```
 
 ### Current Git Branch
 ```
@@ -79,7 +95,19 @@ docs/
 
 ## 🎯 What To Do Next
 
-### Option 1: Stakeholder Review (Recommended First)
+### Option 1: Bond Process Review (Current)
+```
+User is conducting detailed review of bond process with all teams.
+
+Awaiting feedback on:
+- Missing database tables
+- Additional process steps
+- Workflow changes needed
+
+Next: Report findings to AI assistant for implementation
+```
+
+### Option 2: Stakeholder Review (Formal)
 ```
 1. Present TRANSACTION_FLOW_DIAGRAMS.md to teams
 2. Walk through SYSTEM_DESIGN.md
