@@ -57,6 +57,100 @@
             max-width: 100%;
             height: auto;
         }
+        
+        /* Print styles for PDF export */
+        @media print {
+            /* Hide sidebar and header elements */
+            aside, 
+            header button,
+            header .hidden.lg\\:flex,
+            header .h-8.w-px,
+            header div.rounded-full {
+                display: none !important;
+            }
+            
+            /* Expand main content to full width */
+            .flex-1.flex.flex-col {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Remove overflow restrictions */
+            .overflow-hidden,
+            .overflow-y-auto {
+                overflow: visible !important;
+                height: auto !important;
+            }
+            
+            /* Ensure all content is visible */
+            main {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+            
+            /* Page breaks for diagrams */
+            .mermaid {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                margin: 20px 0;
+            }
+            
+            section {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            
+            /* Ensure diagrams fit on page */
+            .mermaid svg {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+            
+            /* Print margins */
+            @page {
+                margin: 15mm;
+                size: A4 landscape;
+            }
+            
+            /* Background colors for print */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Remove footer padding that might cause blank pages */
+            .h-32 {
+                display: none;
+            }
+            
+            /* Print container styles */
+            #print-container {
+                position: static !important;
+                left: auto !important;
+                width: 100% !important;
+                padding: 20px !important;
+            }
+            
+            #print-container .mermaid svg {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+        
+        /* Hide print container on screen */
+        #print-container {
+            display: none;
+        }
+        
+        @media print {
+            #print-container {
+                display: block !important;
+            }
+            #root {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -162,6 +256,94 @@
                 <Icons.ChevronRight size={16} className="ml-auto flex-shrink-0" />}
             </button>
         );
+
+        // Custom print function that exports all flows
+        const handleExportPDF = (currentFlow, flows, setSidebarOpen) => {
+            // Close sidebar for better layout
+            setSidebarOpen(false);
+            
+            // Create a hidden container with all flows
+            const printContainer = document.createElement('div');
+            printContainer.id = 'print-container';
+            printContainer.style.cssText = `
+                position: absolute;
+                left: -9999px;
+                top: 0;
+                width: 1200px;
+                background: white;
+                padding: 40px;
+                font-family: system-ui, -apple-system, sans-serif;
+            `;
+            
+            // Build content for all flows
+            let allFlowsHTML = `
+                <div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #2563eb; padding-bottom: 20px;">
+                    <h1 style="font-size: 32px; font-weight: bold; color: #1e293b; margin: 0;">Transaction Flow Portal</h1>
+                    <p style="font-size: 16px; color: #64748b; margin-top: 10px;">Complete Process Documentation</p>
+                    <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">Generated: ${new Date().toLocaleString()}</p>
+                </div>
+            `;
+            
+            // Add each flow section
+            Object.values(flows).forEach((flow, index) => {
+                if (flow.isReference) return; // Skip reference section
+                
+                allFlowsHTML += `
+                    <div style="margin-bottom: 60px; page-break-before: ${index > 0 ? 'always' : 'auto'};">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-left: 4px solid #2563eb; padding-left: 15px;">
+                            <h2 style="font-size: 24px; font-weight: bold; color: #1e293b; margin: 0;">${index + 1}. ${flow.title}</h2>
+                        </div>
+                        <p style="font-size: 14px; color: #475569; margin-bottom: 30px; line-height: 1.6;">${flow.description}</p>
+                        ${flow.charts ? flow.charts.map((chart, cidx) => `
+                            <div style="margin-bottom: 40px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <h3 style="font-size: 16px; font-weight: 600; color: #334155; margin-bottom: 15px;">${cidx + 1}. ${chart.title}</h3>
+                                <div class="mermaid-chart" data-chart="${encodeURIComponent(chart.code)}">
+                                    <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 6px; font-size: 12px; overflow-x: auto;">${chart.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                                </div>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                `;
+            });
+            
+            printContainer.innerHTML = allFlowsHTML;
+            document.body.appendChild(printContainer);
+            
+            // Render mermaid charts in the print container
+            setTimeout(() => {
+                const chartDivs = printContainer.querySelectorAll('.mermaid-chart');
+                let renderCount = 0;
+                
+                chartDivs.forEach(async (div) => {
+                    const code = decodeURIComponent(div.dataset.chart);
+                    try {
+                        const { svg } = await mermaid.render('print-' + Math.random().toString(36), code);
+                        div.innerHTML = svg;
+                        renderCount++;
+                        
+                        // Print when all charts are rendered
+                        if (renderCount === chartDivs.length) {
+                            setTimeout(() => {
+                                window.print();
+                                // Cleanup after print
+                                setTimeout(() => {
+                                    const container = document.getElementById('print-container');
+                                    if (container) container.remove();
+                                }, 1000);
+                            }, 500);
+                        }
+                    } catch (err) {
+                        console.error('Mermaid render error:', err);
+                        renderCount++;
+                    }
+                });
+                
+                // Fallback if no charts
+                if (chartDivs.length === 0) {
+                    window.print();
+                }
+            }, 100);
+        };
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('bond');
@@ -348,7 +530,7 @@
 
                             <div className="flex items-center gap-3">
                                 <button 
-                                    onClick={() => window.print()}
+                                    onClick={() => handleExportPDF(currentFlow, flows, setSidebarOpen)}
                                     className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-md transition-colors border border-slate-200">
                                     <Icons.ExternalLink size={14} />
                                     Export PDF
