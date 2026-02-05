@@ -1,8 +1,8 @@
 # Treasury Management System - Combined Session Summary
 
 **Project:** Treasury Management System Development  
-**Period:** February 2-3, 2026  
-**Status:** Sprint 1-2 Complete, Design Documentation Complete  
+**Period:** February 2-5, 2026  
+**Status:** Sprint 1-2 Complete, Documentation Restructure Complete, Ready for Sprint 3  
 
 ---
 
@@ -14,12 +14,13 @@ This document combines all development work from February 2-3, 2026:
 |-----|-------|------------------|
 | **Feb 2** | Backend Implementation | Sprint 1 (Foundation) + Sprint 2 (Bond Trading) complete |
 | **Feb 3** | Design Documentation | 5 comprehensive design documents created |
+| **Feb 5** | Documentation Restructure | Consolidated 14+ docs into 8 core documents, added visual flow diagrams |
 
 **Total Output:**
 - 94 API endpoints
 - 18 database tables
 - 6 service modules
-- **5 design documents (169KB total)**
+- **8 core documents (restructured from 14+)**
 
 ---
 
@@ -269,7 +270,86 @@ Day Count Base (from security_master.coupon_day_count_conv):
 
 ---
 
-## PART 3: File Structure
+## PART 3: In Progress / Recent Work (Feb 5, 2026)
+
+### Documentation Restructure
+
+**Objective:** Consolidate 14+ scattered documents into 8 well-organized core documents
+
+#### Actions Completed
+
+| Action | Description | Status |
+|--------|-------------|--------|
+| **Folder Structure** | Created 01-DESIGN, 02-PROCESSES, 03-IMPLEMENTATION, 04-OPERATIONS, archive | ✅ Done |
+| **Merge: SYSTEM_DESIGN.md** | Merged Detailed_Design + Architecture + Alignment_Review | ✅ Done |
+| **Merge: DEVELOPMENT_GUIDE.md** | Merged Data_to_Architecture + Condensed_Plan | ✅ Done |
+| **Create: README.md** | Entry point with navigation | ✅ Done |
+| **Create: DAILY_OPERATIONS.md** | Extracted from Transaction_Workflows | ✅ Done |
+| **Rename & Move** | 4 documents moved to appropriate folders | ✅ Done |
+| **Archive** | 8 old documents moved to archive/ with _ARCHIVED suffix | ✅ Done |
+| **Create: TRANSACTION_FLOW_DIAGRAMS.md** | Visual Mermaid diagrams for all processes | ✅ Done |
+
+#### Result
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **Total Documents** | 14+ | 8 | 43% reduction |
+| **Organization** | Flat | Hierarchical | Clear structure |
+| **Naming** | Mixed (PascalCase/snake_case) | Consistent snake_case | Standardized |
+| **Navigation** | Confusing | README with quick links | Easy access |
+
+#### New Document Structure
+
+```
+docs/
+├── README.md                              ← Entry point
+├── PROJECT_SUMMARY.md                     ← This document
+│
+├── 01-DESIGN/
+│   ├── SYSTEM_DESIGN.md                   ← Merged design
+│   └── FIELD_REFERENCE.md                 ← Field definitions
+│
+├── 02-PROCESSES/
+│   ├── TRANSACTION_WORKFLOWS.md           ← Text workflows
+│   ├── PRE_TRANSACTION_SETUP.md           ← Setup procedures
+│   └── TRANSACTION_FLOW_DIAGRAMS.md       ← Visual diagrams ← NEW
+│
+├── 03-IMPLEMENTATION/
+│   ├── DEVELOPMENT_GUIDE.md               ← Build guide
+│   └── SETUP_INSTRUCTIONS.md              ← Environment setup
+│
+├── 04-OPERATIONS/
+│   ├── DAILY_OPERATIONS.md                ← Daily procedures ← NEW
+│   └── STAKEHOLDER_CHECKLIST.md           ← Review checklist
+│
+└── archive/                               ← Old documents preserved
+```
+
+### Visual Flow Diagrams Created
+
+| Diagram | Steps | Purpose |
+|---------|-------|---------|
+| **Bond Trade Flow** | 7 steps | Buy/Sell workflow with detailed breakdowns |
+| **Interbank Deal Flow** | 5 steps | Lend/Borrow with daily accrual loop |
+| **Repo Trade Flow** | 9 steps | Repo/RRP with margin call workflow |
+| **Client Onboarding** | 6 steps + Gantt | Entity to KYC approval |
+| **New Bond Setup** | 4 steps + Gantt | Security master to trading |
+| **Daily Operations** | Full day | 08:00-19:30 with normal vs month-end |
+
+**Format:** Mermaid diagrams (renders automatically in GitHub/GitLab)
+
+### Alignment Fixes
+
+| Issue | Before | After |
+|-------|--------|-------|
+| **Limit Types** | AGGREGATE limit mentioned | Removed - use product-specific limits only |
+| **Naming Convention** | Mixed PascalCase/snake_case | Standardized snake_case |
+| **Security Master Owner** | Listed as IT Admin | Updated to Back Office |
+| **ThaiBMA Timing** | Only 17:00 | Added month-end 17:30-18:00 |
+
+---
+
+## PART 5: File Structure
 
 ### Source Code
 ```
@@ -306,7 +386,7 @@ data/extracted/
 
 ---
 
-## PART 4: Git Commit History
+## PART 6: Git Commit History
 
 | Commit | Date | Description |
 |--------|------|-------------|
@@ -317,19 +397,26 @@ data/extracted/
 | `9b645da` | Feb 3 | Security Master ownership changed to Back Office |
 | `d23ae57` | Feb 3 | Transaction Process Guide |
 | `c20bb1d` | Feb 3 | Pre-Transaction Setup sections |
+| `77bc74e` | Feb 5 | Transaction flow diagrams (Mermaid) |
+| `0968323` | Feb 5 | Documentation restructure - 14 docs → 8 docs |
+| `31b99b8` | Feb 5 | Architecture document analysis |
+| `01c2e74` | Feb 5 | Remove AGGREGATE limit, use product-specific |
+| `90736be` | Feb 5 | Remove individual session summaries |
+| `3d1e434` | Feb 5 | Align architecture with database design |
 | `91d8faa` | Feb 3 | Standalone Pre-Transaction Setup Guide |
 | `726e927` | Feb 3 | ThaiBMA timing for normal vs month-end days |
 | *(earlier)* | Feb 2 | Sprint 1-2 implementation commits |
 
 ---
 
-## PART 5: Next Steps
+## PART 7: Next Steps
 
-### Option 1: Stakeholder Review (Recommended First)
-- [ ] Review design documents with all teams
-- [ ] Confirm team responsibilities
-- [ ] Sign off on approval workflows
-- [ ] Validate daily operational procedures
+### Option 1: Stakeholder Review (Recommended First) - PENDING
+- [ ] Review restructured documents with all teams
+- [ ] Walk through TRANSACTION_FLOW_DIAGRAMS.md
+- [ ] Get sign-off on SYSTEM_DESIGN.md
+- [ ] Validate DAILY_OPERATIONS.md procedures
+- [ ] Confirm Pre-Transaction Setup workflows
 
 ### Option 2: Sprint 3 - Interbank + Repo Implementation
 | Day | Task | Deliverable |
@@ -361,10 +448,10 @@ data/extracted/
 | **API Routes** | 94 |
 | **Database Tables** | 18 |
 | **Service Modules** | 6 |
-| **Documentation** | 5 documents, 169KB |
-| **Lines of Documentation** | 4,128 |
+| **Documentation** | 8 core documents, restructured |
+| **Lines of Documentation** | 5,000+ |
 | **Sprints Complete** | 2 |
-| **Git Commits** | 10+ |
+| **Git Commits** | 15+ |
 
 ---
 
@@ -374,14 +461,17 @@ data/extracted/
 |----------|----------|
 | API Documentation | http://localhost:8000/docs |
 | Database Admin | http://localhost:8080 |
-| Main Design Doc | `docs/Treasury_System_Detailed_Design_Input.md` |
-| Transaction Workflows | `docs/TRANSACTION_PROCESS_GUIDE.md` |
-| Setup Procedures | `docs/PRE_TRANSACTION_SETUP_GUIDE.md` |
-| Field Reference | `docs/Field_Update_Matrix.md` |
-| Review Checklist | `docs/STAKEHOLDER_REVIEW_CHECKLIST.md` |
+| System Design | `docs/01-DESIGN/SYSTEM_DESIGN.md` |
+| Field Reference | `docs/01-DESIGN/FIELD_REFERENCE.md` |
+| Transaction Workflows | `docs/02-PROCESSES/TRANSACTION_WORKFLOWS.md` |
+| Transaction Flow Diagrams | `docs/02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md` |
+| Setup Procedures | `docs/02-PROCESSES/PRE_TRANSACTION_SETUP.md` |
+| Development Guide | `docs/03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md` |
+| Daily Operations | `docs/04-OPERATIONS/DAILY_OPERATIONS.md` |
+| Review Checklist | `docs/04-OPERATIONS/STAKEHOLDER_CHECKLIST.md` |
 
 ---
 
 **End of Combined Session Summary**
 
-*Sprints 1-2 Complete | Design Documentation Complete | Ready for Sprint 3 or Stakeholder Review*
+*Sprints 1-2 Complete | Documentation Restructure Complete (Feb 5) | Ready for Stakeholder Review | Sprint 3 Pending*
