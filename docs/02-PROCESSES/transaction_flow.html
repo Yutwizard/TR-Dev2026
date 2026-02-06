@@ -443,6 +443,97 @@
                         { title: "Bond Transactions Lifecycle", code: `flowchart LR\n    subgraph "Transaction Types"\n        T1["Buy"]\n        T2["Sell"]\n        T3["Repo"]\n        T4["ReverseRepo"]\n        T5["Rehypothecation"]\n        T6["Coupon"]\n    end\n    subgraph "Daily Updates (18:00)"\n        D1["Update clean_price\\nFrom ThaiBMA"]\n        D2["Calculate market_value"]\n        D3["Calculate unrealized_gain_loss"]\n        D4["Update valuation_date"]\n    end\n    T1 --> D1\n    T2 --> D1\n    T3 --> D1\n    T4 --> D1\n    T5 --> D1\n    T6 --> D1\n    D1 --> D2 --> D3 --> D4` }
                     ]
                 },
+                market_data: {
+                    id: 'market_data',
+                    title: "ThaiBMA Market Data Import",
+                    icon: Icons.FileText,
+                    description: "Daily import of mark-to-market prices from ThaiBMA for position valuation and risk calculations.",
+                    charts: [
+                        { title: "Market Data Import Workflow", code: `flowchart TD
+    subgraph "Step 1: Download (Back Office)"
+        MD1["17:00: Login ThaiBMA Portal\nhttps://www.thaibma.or.th"]
+        MD2["Download Mark2Market CSV\nFormat: Mark2Market_DDMMYYYY.csv"]
+        MD3["Save to Designated Folder"]
+    end
+    subgraph "Step 2: Import to System (BO)"
+        MD4["Upload File via API\nPOST /market-data/import"]
+        MD5["⚙️ Auto-match Symbols\nCSV → security_master"]
+        MD6["⚙️ Validate Prices\nCheck ±5%/±10%/±20% movement"]
+        MD7["⚙️ Store to Database\nthaibma_market_data"]
+    end
+    subgraph "Step 3: Validation (Middle Office)"
+        MD8["Review Price Alerts"]
+        MD9{"Alert Level?"}
+        MD10["⚠️ Warning (>5%)\nAcknowledge"]
+        MD11["🚨 Alert (>10%)\nInvestigate"]
+        MD12["🛑 Critical (>20%)\nHARD STOP"]
+        MD13["Check Missing Securities"]
+    end
+    subgraph "Step 4: Position MTM (System)"
+        MD14["⚙️ Read Latest Prices"]
+        MD15["⚙️ Calculate Market Value\nNominal × (Clean + AI%) / 100"]
+        MD16["⚙️ Calculate Unrealized P&L\nMarket - Book"]
+        MD17["⚙️ Update Collateral Values\nFor repo margin"]
+        MD18["⚙️ Check Margin Calls"]
+    end
+    subgraph "Step 5: Sign-off (Back Office)"
+        MD19["Verify All Bonds Priced"]
+        MD20["Check for Null/Zero Prices"]
+        MD21["Confirm Import Log\nmarket_data_import_log"]
+        MD22["✅ Daily Sign-off"]
+    end
+    MD1 --> MD2 --> MD3 --> MD4 --> MD5 --> MD6 --> MD7 --> MD8 --> MD9
+    MD9 -->|Warning| MD10 --> MD13
+    MD9 -->|Alert| MD11 --> MD13
+    MD9 -->|Critical| MD12
+    MD9 -->|OK| MD13 --> MD14 --> MD15 --> MD16 --> MD17 --> MD18 --> MD19 --> MD20 --> MD21 --> MD22` },
+                        { title: "Price Movement Validation", code: `flowchart TD
+    subgraph "Price Change Calculation"
+        P1["Get Today's Price\nthaibma_market_data.clean_price"]
+        P2["Get Yesterday's Price\nPrevious day record"]
+        P3["Calculate Change %\n|Today - Yesterday| / Yesterday × 100"]
+    end
+    subgraph "Alert Thresholds"
+        P4{"≥ 20%?"}
+        P5{"≥ 10%?"}
+        P6{"≥ 5%?"}
+    end
+    subgraph "Actions"
+        A1["🛑 CRITICAL\nStop Processing"]
+        A2["🚨 ALERT\nMO Investigation"]
+        A3["⚠️ WARNING\nAcknowledge & Continue"]
+        A4["✅ OK\nNormal Processing"]
+    end
+    P1 --> P2 --> P3 --> P4
+    P4 -->|Yes| A1
+    P4 -->|No| P5
+    P5 -->|Yes| A2
+    P5 -->|No| P6
+    P6 -->|Yes| A3
+    P6 -->|No| A4` },
+                        { title: "Market Value Calculation", code: `flowchart LR
+    subgraph "Input Data"
+        I1["Nominal Amount\nFrom bond_positions"]
+        I2["Clean Price %\nFrom thaibma_market_data"]
+        I3["AI %\nAccrued Interest %"]
+    end
+    subgraph "Calculation"
+        C1["Clean Value =\nNominal × Clean / 100"]
+        C2["Accrued Amount =\nNominal × AI% / 100"]
+        C3["Market Value =\nClean Value + Accrued"]
+    end
+    subgraph "Output"
+        O1["bond_positions.market_value"]
+        O2["bond_positions.unrealized_gain_loss\n= Market - Book"]
+    end
+    I1 --> C1
+    I2 --> C1
+    I3 --> C2
+    C1 --> C3
+    C2 --> C3
+    C3 --> O1 --> O2` }
+                    ]
+                },
                 reference: {
                     id: 'reference',
                     title: "Reference & Legend",
