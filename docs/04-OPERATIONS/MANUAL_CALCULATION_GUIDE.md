@@ -676,6 +676,188 @@ WHERE nominal_amount < 0
 
 ---
 
+## 7. Market Data Import Calculations
+
+### 7.1 Price Movement Percentage
+
+**Purpose:** Validate if price change exceeds thresholds
+
+**Formula:**
+```
+Price Change % = |Today's Price - Yesterday's Price| / Yesterday's Price × 100
+```
+
+**Step-by-Step:**
+
+| Step | Action | Formula |
+|------|--------|---------|
+| 1 | Get today's price | `thaibma_market_data.clean_price` (today) |
+| 2 | Get yesterday's price | `thaibma_market_data.clean_price` (today - 1) |
+| 3 | Calculate difference | `Today - Yesterday` |
+| 4 | Divide by yesterday | `Difference / Yesterday` |
+| 5 | Convert to % | `× 100` |
+
+**Example:**
+```
+Today's Price:    100.45
+Yesterday's Price: 102.50
+
+Difference = 100.45 - 102.50 = -2.05
+Change % = |-2.05| / 102.50 × 100 = 2.00%
+
+Alert Level: WARNING (≥5% = Warning, ≥10% = Alert, ≥20% = Critical)
+```
+
+**Validation Query:**
+```sql
+SELECT 
+    t1.thaibma_symbol,
+    t1.clean_price AS today,
+    t2.clean_price AS yesterday,
+    ABS(t1.clean_price - t2.clean_price) / t2.clean_price AS change_pct,
+    CASE 
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.20 THEN 'CRITICAL'
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.10 THEN 'ALERT'
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.05 THEN 'WARNING'
+        ELSE 'OK'
+    END AS alert_level
+FROM thaibma_market_data t1
+LEFT JOIN thaibma_market_data t2 
+    ON t1.security_id = t2.security_id 
+    AND t2.data_date = t1.data_date - 1
+WHERE t1.data_date = CURRENT_DATE;
+```
+
+---
+
+### 7.2 Dirty Price Calculation
+
+**Purpose:** Calculate full price including accrued interest
+
+**Formula:**
+```
+Dirty Price = Clean Price + Accrued Interest%
+```
+
+**Example:**
+```
+Clean Price:      100.072420
+Accrued Interest: 1.814247%
+
+Dirty Price = 100.072420 + 1.814247 = 101.886667
+```
+
+**Position Market Value Using Dirty Price:**
+```
+Market Value = Nominal × Dirty Price / 100
+             = Nominal × (Clean Price + AI%) / 100
+
+Example:
+Nominal:     10,000,000 THB
+Dirty Price: 101.886667
+
+Market Value = 10,000,000 × 101.886667 / 100 = 10,188,666.70 THB
+```
+
+---
+
+### 7.3 Accrued Interest Amount from Percentage
+
+**Purpose:** Convert AI% to actual THB amount for position valuation
+
+**Formula:**
+```
+Accrued Interest Amount = Nominal × AI% / 100
+```
+
+**Example:**
+```
+Nominal: 10,000,000 THB
+AI%:     1.814247%
+
+Accrued Amount = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
+```
+
+**Complete Market Value Calculation:**
+```
+Market Value = (Clean Price × Nominal / 100) + Accrued Interest Amount
+
+Or equivalently:
+Market Value = Nominal × (Clean Price + AI%) / 100
+
+Example:
+Clean Price:  100.072420
+AI%:          1.814247%
+Nominal:      10,000,000 THB
+
+Clean Value = 10,000,000 × 100.072420 / 100 = 10,007,242.00 THB
+Accrued = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
+Total = 10,007,242.00 + 181,424.70 = 10,188,666.70 THB
+```
+
+---
+
+### 7.4 Import Statistics Verification
+
+**Purpose:** Verify import batch completed successfully
+
+**Checks:**
+
+| Check | Formula | Expected Result |
+|-------|---------|-----------------|
+| Total Records | Count rows in CSV | Matches `total_records` |
+| Success Rate | `successful / total × 100` | > 95% |
+| Missing Securities | `missing_securities` | 0 (or known new bonds) |
+| Price Alerts | `price_movement_alerts` | Review each |
+
+**Verification Query:**
+```sql
+SELECT 
+    batch_id,
+    import_date,
+    total_records,
+    successful_records,
+    (successful_records::numeric / total_records * 100) AS success_rate,
+    failed_records,
+    price_movement_alerts,
+    missing_securities,
+    CASE 
+        WHEN (successful_records::numeric / total_records) < 0.95 THEN 'INVESTIGATE'
+        WHEN missing_securities > 0 THEN 'CHECK NEW BONDS'
+        WHEN price_movement_alerts > 10 THEN 'REVIEW PRICES'
+        ELSE 'OK'
+    END AS status
+FROM market_data_import_log
+WHERE import_date = CURRENT_DATE;
+```
+
+---
+
+### 7.5 Missing Securities Check
+
+**Purpose:** Identify bonds in CSV not in security_master
+
+**Query:**
+```sql
+-- Find unmatched symbols
+SELECT DISTINCT thaibma_symbol
+FROM thaibma_market_data
+WHERE data_date = CURRENT_DATE
+  AND security_id IS NULL;
+
+-- Or check import log
+SELECT missing_securities, error_details
+FROM market_data_import_log
+WHERE import_date = CURRENT_DATE;
+```
+
+**Resolution Steps:**
+1. Verify symbol spelling matches `security_master.symbol`
+2. If new bond: Add to `security_master` first
+3. Re-import or update security mapping
+
+---
+
 ## 📎 Quick Reference Card
 
 ### Day Count Conventions
@@ -691,14 +873,26 @@ WHERE nominal_amount < 0
 
 | Calculation | Formula |
 |-------------|---------|
+| **Bond Trades** | |
 | Accrued Interest | `Face × Coupon% × (Days/Base)` |
 | Settlement Amount | `(Face × Clean/100) + Accrued` |
+| **Interbank** | |
+| Interest | `Principal × Rate% × (Tenor/Base)` |
+| Daily Accrual | `Principal × Rate% × (1/Base)` |
+| **Repo** | |
 | Repo Interest | `Near × Rate% × (Tenor/Base)` |
 | Far Leg | `Near + Interest` |
+| Collateral Value | `Face × Price/100 × (1 - Haircut%)` |
+| Margin % | `(Collateral / Loan) × 100` |
+| **Position/Costing** | |
 | WAC (Buy) | `(OldCost + NewCost) / (OldQty + NewQty)` |
 | Realized P&L | `(Sell - WAC) × Qty / 100` |
 | Unrealized P&L | `Market - Book` |
-| Margin % | `(Collateral / Loan) × 100` |
+| **Market Data** | |
+| Price Change % | `|Today - Yesterday| / Yesterday × 100` |
+| Dirty Price | `Clean + AI%` |
+| Market Value | `Nominal × (Clean + AI%) / 100` |
+| Accrued Amount | `Nominal × AI% / 100` |
 
 ---
 

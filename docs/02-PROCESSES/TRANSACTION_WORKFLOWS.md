@@ -1466,4 +1466,233 @@ Same as Buy, plus:
 
 ---
 
+---
+
+## 5. Market Data Import (Daily - ThaiBMA)
+
+### Overview
+Daily import of mark-to-market prices from ThaiBMA for position valuation and risk calculations.
+
+**Participating Teams:** BO (Primary) + IT (Support) + MO (Validation)
+
+**Total Time:** 30 minutes (17:00 - 17:30 normal days, 17:30-18:00 month-end)
+
+---
+
+### Step 1: Download ThaiBMA Mark2Market File (Back Office)
+
+**Responsible:** Back Office Market Data Team
+
+| # | Action | Details | Timing |
+|---|--------|---------|--------|
+| 1.1 | 👤 Login to ThaiBMA portal | https://www.thaibma.or.th | Normal: 17:00, Month-end: 17:30 |
+| 1.2 | 👤 Navigate to Mark2Market | Market Data → EOD Prices | - |
+| 1.3 | 👤 Download CSV file | Format: Mark2Market_DDMMYYYY.csv | Save to designated folder |
+| 1.4 | ✅ Verify file date | Check filename matches trade date | Critical for reconciliation |
+
+**File Format:**
+| Column | Example | Description |
+|--------|---------|-------------|
+| BOND | LB25DA | ThaiBMA symbol |
+| Coupon | 3.85 | Coupon rate % |
+| Maturity | 12-Dec-2025 | Maturity date |
+| Clean Price % | 100.072420 | **Primary MTM field** |
+| AI % | 1.814247 | Accrued interest % |
+| Market Yield % | 1.252060 | Yield for risk calcs |
+
+---
+
+### Step 2: Import to System (Back Office)
+
+**Responsible:** Back Office Market Data Team
+
+| # | Action | API / Process | Result |
+|--------|--------|---------------|--------|
+| 2.1 | 👤 Upload file | `POST /api/v1/market-data/import` | System parses CSV |
+| 2.2 | ⚙️ Auto-match securities | Match `BOND` column to `security_master.symbol` | Links to security_id |
+| 2.3 | ⚙️ Validate prices | Check for ±5% / ±10% / ±20% movements | Alerts generated |
+| 2.4 | ⚙️ Store data | Save to `thaibma_market_data` table | Indexed by security+date |
+| 2.5 | ⚙️ Log import | Create `market_data_import_log` entry | Audit trail |
+
+**Tables Updated:**
+- `thaibma_market_data` - New price records (one per bond)
+- `market_data_import_log` - Import batch statistics
+
+---
+
+### Step 3: Price Validation (Middle Office)
+
+**Responsible:** Middle Office Risk Manager
+
+| # | Action | Threshold | Response |
+|--------|--------|-----------|----------|
+| 3.1 | 👤 Review warnings | ±5% to ±10% movement | Acknowledge if expected |
+| 3.2 | 👤 Review alerts | ±10% to ±20% movement | Investigate cause |
+| 3.3 | 👤 Handle critical | > ±20% movement | **HARD STOP** - Do not proceed |
+| 3.4 | 👤 Check missing securities | Import log shows unmatched bonds | Add to security_master if new |
+
+**Price Movement Calculation:**
+```
+Change % = |Today's Price - Yesterday's Price| / Yesterday's Price
+
+Example:
+Yesterday: 102.50
+Today:     100.45
+Change:    |100.45 - 102.50| / 102.50 = 2.00% (Warning)
+```
+
+**Validation Query:**
+```sql
+SELECT 
+    t1.thaibma_symbol,
+    t1.clean_price AS today_price,
+    t2.clean_price AS yesterday_price,
+    ABS(t1.clean_price - t2.clean_price) / t2.clean_price AS change_pct,
+    CASE 
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.20 THEN 'CRITICAL'
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.10 THEN 'ALERT'
+        WHEN ABS(t1.clean_price - t2.clean_price) / t2.clean_price > 0.05 THEN 'WARNING'
+        ELSE 'OK'
+    END AS status
+FROM thaibma_market_data t1
+LEFT JOIN thaibma_market_data t2 
+    ON t1.security_id = t2.security_id 
+    AND t2.data_date = t1.data_date - 1
+WHERE t1.data_date = CURRENT_DATE;
+```
+
+---
+
+### Step 4: Trigger Position MTM (System - After Import)
+
+**Responsible:** System (Automatic)
+
+| # | Action | Fields Updated | Calculation |
+|--------|--------|----------------|-------------|
+| 4.1 | ⚙️ Get latest prices | `thaibma_market_data.clean_price` | For each position |
+| 4.2 | ⚙️ Calculate market value | `bond_positions.market_value` | `(Price × Nominal/100) + Accrued` |
+| 4.3 | ⚙️ Calculate unrealized P&L | `bond_positions.unrealized_gain_loss` | `Market Value - Book Value` |
+| 4.4 | ⚙️ Update collateral values | `collateral_positions.market_value` | For repo margin |
+| 4.5 | ⚙️ Check margin calls | Compare to threshold | If breached, create margin_call |
+
+**Market Value Calculation:**
+```
+Market Value = (Clean Price × Nominal / 100) + Accrued Interest Amount
+
+Where:
+- Clean Price from thaibma_market_data.clean_price
+- Accrued Interest = Nominal × AI% / 100 (from thaibma_market_data.accrued_interest)
+
+Example:
+Nominal:        10,000,000 THB
+Clean Price:    102.50
+AI%:            1.814247%
+
+Clean Value = 10,000,000 × 102.50 / 100 = 10,250,000 THB
+Accrued Amount = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
+Market Value = 10,250,000 + 181,424.70 = 10,431,424.70 THB
+```
+
+---
+
+### Step 5: Verification & Sign-off (Back Office)
+
+**Responsible:** Back Office Market Data Team + Accounting
+
+| # | Action | Check | Timing |
+|--------|--------|-------|--------|
+| 5.1 | 👤 Verify all bonds priced | Count `thaibma_market_data` records = Expected count | 17:30 |
+| 5.2 | 👤 Check for zeros/nulls | `SELECT * WHERE clean_price IS NULL OR clean_price = 0` | 17:30 |
+| 5.3 | 👤 Review position MV changes | Compare to yesterday's values | 18:00 |
+| 5.4 | 👤 Sign off import log | Confirm successful completion | EOD |
+
+**Import Log Query:**
+```sql
+SELECT 
+    batch_id,
+    import_date,
+    total_records,
+    successful_records,
+    failed_records,
+    price_movement_alerts,
+    missing_securities,
+    status
+FROM market_data_import_log
+WHERE import_date = CURRENT_DATE;
+```
+
+---
+
+### Data Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   MARKET DATA IMPORT FLOW                        │
+└─────────────────────────────────────────────────────────────────┘
+
+ThaiBMA Portal
+      │
+      ▼ Download CSV (17:00)
+┌─────────────┐
+│  Mark2Market_ │
+│  30112025.csv │
+└─────────────┘
+      │
+      ▼ Upload to System
+┌──────────────────────────────┐
+│  POST /market-data/import    │
+│  - Parse CSV                 │
+│  - Match symbols             │
+│  - Validate prices           │
+└──────────────────────────────┘
+      │
+      ├────────────────────────────────────┐
+      ▼                                    ▼
+┌─────────────────────┐          ┌─────────────────────┐
+│ thaibma_market_data │          │ market_data_import  │
+│ - security_id       │          │ _log                │
+│ - data_date         │          │ - batch_id          │
+│ - clean_price       │          │ - total_records     │
+│ - market_yield      │          │ - price_alerts      │
+│ - accrued_interest  │          │ - status            │
+└─────────────────────┘          └─────────────────────┘
+      │
+      ▼ Read by
+┌──────────────────────────────┐
+│     POSITION MTM BATCH       │
+│  (Runs after price import)   │
+└──────────────────────────────┘
+      │
+      ▼ Updates
+┌──────────────────────────────┐
+│  bond_positions              │
+│  - market_value              │
+│  - unrealized_gain_loss      │
+│  - market_rate               │
+└──────────────────────────────┘
+      │
+      ▼ Triggers
+┌──────────────────────────────┐
+│  MARGIN CALL CHECK           │
+│  (for repo positions)        │
+└──────────────────────────────┘
+```
+
+---
+
+### Field Mapping Reference
+
+| ThaiBMA CSV | Database Field | Table | Usage |
+|-------------|----------------|-------|-------|
+| BOND | thaibma_symbol | thaibma_market_data | Symbol lookup |
+| Coupon | coupon_rate | thaibma_market_data | Verification |
+| Maturity | maturity_date | thaibma_market_data | Verification |
+| Clean Price % | clean_price | thaibma_market_data | **Primary MTM** |
+| AI % | accrued_interest | thaibma_market_data | Dirty price calc |
+| Market Yield % | market_yield | thaibma_market_data | Risk reporting |
+| Modified Duration* | modified_duration | thaibma_market_data | Risk metrics |
+| Convexity | convexity | thaibma_market_data | Risk metrics |
+
+---
+
 **End of Transaction Process Guide**
