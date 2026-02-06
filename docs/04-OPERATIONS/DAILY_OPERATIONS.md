@@ -15,7 +15,7 @@
 | **08:00-09:00** | Pre-market checks | 1 hour | ⚠️ |
 | **09:00-17:00** | Market hours support | 8 hours | |
 | **17:00-17:30** | ThaiBMA price download | 30 min | 🔴 |
-| **17:30-18:00** | Import & validation | 30 min | 🔴 |
+| **17:30-18:00** | Import via API & validation | 30 min | 🔴 |
 | **18:00-19:30** | EOD batch processing | 1.5 hours | 🔴 |
 
 ### Month-End Day (Extended)
@@ -23,7 +23,7 @@
 | Time | Activity | Note |
 |------|----------|------|
 | **17:30-18:00** | Monitor ThaiBMA portal | Later release |
-| **18:00-18:30** | Download & validate | Delayed start |
+| **18:00-18:30** | Download & API import | Delayed start |
 | **18:30-19:50** | EOD batch processing | +20 min delay |
 
 ---
@@ -112,16 +112,25 @@
 ```
 1. Login to Treasury System
 2. Navigate: Market Data → Import
-3. Select file: THAIBMA_MTM_YYYYMMDD.csv
-4. Click "Validate & Import"
-5. Review import log
-6. Confirm success
+3. Upload file: Mark2Market_DDMMYYYY.csv
+4. API: POST /api/v1/market-data/import
+5. Review import log for:
+   - Total records processed
+   - Price movement alerts (>5%, >10%, >20%)
+   - Missing securities
+6. Confirm successful status
 ```
 
+**System Actions:**
+- Parse CSV and match symbols to security_master
+- Validate price movements (warning/alert/critical thresholds)
+- Store to thaibma_market_data table
+- Generate import batch log
+
 **Tables Updated:**
-- `bond_positions.clean_price`
-- `bond_positions.market_rate`
-- `collateral_positions.valuation_price`
+- `thaibma_market_data` - New price records imported
+- `market_data_import_log` - Import batch statistics
+- Triggers: Position MTM batch updates `bond_positions.market_value`
 
 ---
 

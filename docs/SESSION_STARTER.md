@@ -157,10 +157,10 @@ Timeline: Week 3-4 of 10-week plan (see DEVELOPMENT_GUIDE.md)
 | Metric | Value |
 |--------|-------|
 | API Routes | 94 |
-| Database Tables | 18 |
+| **Database Tables** | **20** (18 + 2 ThaiBMA market data) |
 | Service Modules | 6 |
 | Documentation | 10 core documents |
-| Git Commits | 18+ |
+| Git Commits | 19+ |
 | Sprints Complete | 2 of 6 |
 
 ---

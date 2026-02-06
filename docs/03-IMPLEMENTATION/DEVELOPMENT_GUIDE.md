@@ -114,7 +114,7 @@ See [System Design](../01-DESIGN/SYSTEM_DESIGN.md) for full database documentati
 
 | Day | Task | Deliverable |
 |-----|------|-------------|
-| 1 | Database setup | PostgreSQL with 18 tables |
+| 1 | Database setup | PostgreSQL with 18 tables (now 20 with market data) |
 | 2 | FastAPI scaffold | Running API server |
 | 3 | Models | SQLAlchemy models |
 | 4 | Master data APIs | 5 CRUD endpoints |

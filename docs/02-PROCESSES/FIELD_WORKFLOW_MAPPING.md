@@ -430,7 +430,39 @@
 
 ---
 
-## 5. Summary by Workflow Section
+## 5. Market Data Tables (New)
+
+### 5.1 thaibma_market_data
+
+| Field | Workflow Step | Section | Team | Update Type |
+|-------|---------------|---------|------|-------------|
+| `data_date` | Step 2: Import | Market Data Import | BO | 👤 |
+| `security_id` | Step 2: Auto-match | Market Data Import | System | ⚙️ |
+| `thaibma_symbol` | Step 2: Parse CSV | Market Data Import | BO | 👤 |
+| `clean_price` | Step 2: Store | Market Data Import | BO | 👤 |
+| `accrued_interest` | Step 2: Store | Market Data Import | BO | 👤 |
+| `market_yield` | Step 2: Store | Market Data Import | BO | 👤 |
+| `modified_duration` | Step 2: Store | Market Data Import | BO | 👤 |
+| `import_batch_id` | Step 2: System | Market Data Import | System | ⚙️ |
+| `import_file_name` | Step 2: System | Market Data Import | System | ⚙️ |
+| `is_valid` | Step 3: Validation | Market Data Import | MO | 👤 |
+
+### 5.2 market_data_import_log
+
+| Field | Workflow Step | Section | Team | Update Type |
+|-------|---------------|---------|------|-------------|
+| `batch_id` | Step 2: System | Market Data Import | System | ⚙️ |
+| `import_date` | Step 2: Import | Market Data Import | BO | 👤 |
+| `file_name` | Step 2: Import | Market Data Import | BO | 👤 |
+| `total_records` | Step 2: System | Market Data Import | System | ⚙️ |
+| `successful_records` | Step 2: System | Market Data Import | System | ⚙️ |
+| `price_movement_alerts` | Step 3: Validation | Market Data Import | System | ⚙️ |
+| `missing_securities` | Step 2: System | Market Data Import | System | ⚙️ |
+| `status` | Step 5: Sign-off | Market Data Import | BO | 👤 |
+
+---
+
+## 6. Summary by Workflow Section
 
 | Section | Tables Covered | Field Count |
 |---------|----------------|-------------|
@@ -444,10 +476,11 @@
 | 2. Interbank Deal | interbank_deals, interbank_interest_schedule, limit_utilization | 25+ |
 | 3. Repo Trade | repo_trades, collateral_positions, margin_calls, cash_margin_movements, limit_utilization | 50+ |
 | 4. Scheduled Events | bond_transactions, bond_positions, security_master, interbank_deals, repo_trades | 30+ |
+| 5. Market Data Import | **thaibma_market_data**, **market_data_import_log** | 15+ |
 
 ---
 
-## 6. Fields Not in Active Workflows
+## 7. Fields Not in Active Workflows
 
 The following fields are system-managed and do not require explicit workflow documentation:
 

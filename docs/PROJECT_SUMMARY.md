@@ -20,9 +20,9 @@ This document combines all development work from February 2-3, 2026:
 
 **Total Output:**
 - 94 API endpoints
-- 18 database tables
+- **20 database tables** (was 18, added ThaiBMA market data tables)
 - 6 service modules
-- **8 core documents (restructured from 14+)**
+- **10 core documents**
 
 ---
 
