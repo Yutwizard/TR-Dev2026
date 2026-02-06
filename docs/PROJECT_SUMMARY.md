@@ -347,7 +347,8 @@ docs/
 │
 ├── 04-OPERATIONS/
 │   ├── DAILY_OPERATIONS.md                ← Daily procedures
-│   └── STAKEHOLDER_CHECKLIST.md           ← Review checklist
+│   ├── STAKEHOLDER_CHECKLIST.md           ← Review checklist
+│   └── MANUAL_CALCULATION_GUIDE.md        ← Troubleshooting calculations ← NEW
 │
 └── archive/                               ← Old documents preserved
 ```

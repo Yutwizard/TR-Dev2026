@@ -86,7 +86,8 @@ docs/
 │
 ├── 04-OPERATIONS/                     ← Operations docs
 │   ├── DAILY_OPERATIONS.md            ← Daily batch procedures
-│   └── STAKEHOLDER_CHECKLIST.md       ← Review checklist
+│   ├── STAKEHOLDER_CHECKLIST.md       ← Review checklist
+│   └── MANUAL_CALCULATION_GUIDE.md    ← Calculation troubleshooting ← NEW
 │
 └── archive/                           ← Old documents
 ```
