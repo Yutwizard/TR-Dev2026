@@ -515,23 +515,29 @@
     subgraph "Input Data"
         I1["Nominal Amount\nFrom bond_positions"]
         I2["Clean Price %\nFrom thaibma_market_data"]
-        I3["AI %\nAccrued Interest %"]
+        I3["AI %\nFrom thaibma_market_data"]
     end
-    subgraph "Calculation"
+    subgraph "Calculation (for Valuation)"
         C1["Clean Value =\nNominal × Clean / 100"]
-        C2["Accrued Amount =\nNominal × AI% / 100"]
+        C2["Accrued (Valuation) =\nNominal × ThaiBMA_AI% / 100"]
         C3["Market Value =\nClean Value + Accrued"]
     end
     subgraph "Output"
         O1["bond_positions.market_value"]
         O2["bond_positions.unrealized_gain_loss\n= Market - Book"]
     end
+    subgraph "Note"
+        N1["⚠️ ThaiBMA AI% used for VALUATION only"]
+        N2["For accounting: Use system-calculated AI\nNominal × Coupon% × (Days/365)"]
+    end
     I1 --> C1
     I2 --> C1
     I3 --> C2
     C1 --> C3
     C2 --> C3
-    C3 --> O1 --> O2` }
+    C3 --> O1 --> O2
+    O2 -.-> N1
+    N1 --> N2` }
                     ]
                 },
                 reference: {

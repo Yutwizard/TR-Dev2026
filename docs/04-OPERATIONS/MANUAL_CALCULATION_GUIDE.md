@@ -730,19 +730,19 @@ WHERE t1.data_date = CURRENT_DATE;
 
 ---
 
-### 7.2 Dirty Price Calculation
+### 7.2 Dirty Price Calculation (for Valuation)
 
-**Purpose:** Calculate full price including accrued interest
+**Purpose:** Calculate full price for position MTM valuation
 
 **Formula:**
 ```
-Dirty Price = Clean Price + Accrued Interest%
+Dirty Price = Clean Price + AI% (from ThaiBMA)
 ```
 
 **Example:**
 ```
-Clean Price:      100.072420
-Accrued Interest: 1.814247%
+Clean Price:      100.072420 (from ThaiBMA)
+AI%:              1.814247% (from ThaiBMA)
 
 Dirty Price = 100.072420 + 1.814247 = 101.886667
 ```
@@ -759,41 +759,51 @@ Dirty Price: 101.886667
 Market Value = 10,000,000 × 101.886667 / 100 = 10,188,666.70 THB
 ```
 
+> **⚠️ Important:** This uses ThaiBMA's AI% for **valuation only**.
+> For **accounting purposes**, use system-calculated accrued interest.
+
 ---
 
-### 7.3 Accrued Interest Amount from Percentage
+### 7.3 Accrued Interest - Two Calculations
 
-**Purpose:** Convert AI% to actual THB amount for position valuation
+**Purpose:** Understand the difference between valuation AI and accounting AI
 
-**Formula:**
+| Use Case | Source | Formula | Purpose |
+|----------|--------|---------|---------|
+| **Valuation** | ThaiBMA AI% | `Nominal × AI% / 100` | Dirty price, Market Value |
+| **Accounting** | System Calc | `Nominal × Coupon% × (Days/365)` | GL journals, Accrual entries |
+
+---
+
+**A. ThaiBMA AI% (for Valuation):**
 ```
-Accrued Interest Amount = Nominal × AI% / 100
-```
-
-**Example:**
-```
-Nominal: 10,000,000 THB
-AI%:     1.814247%
-
-Accrued Amount = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
-```
-
-**Complete Market Value Calculation:**
-```
-Market Value = (Clean Price × Nominal / 100) + Accrued Interest Amount
-
-Or equivalently:
-Market Value = Nominal × (Clean Price + AI%) / 100
+Valuation AI = Nominal × ThaiBMA_AI% / 100
 
 Example:
-Clean Price:  100.072420
-AI%:          1.814247%
-Nominal:      10,000,000 THB
+Nominal:        10,000,000 THB
+ThaiBMA AI%:    1.814247%
 
-Clean Value = 10,000,000 × 100.072420 / 100 = 10,007,242.00 THB
-Accrued = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
-Total = 10,007,242.00 + 181,424.70 = 10,188,666.70 THB
+Valuation AI = 10,000,000 × 1.814247 / 100 = 181,424.70 THB
+→ Used for: Dirty price calculation, Position MTM
 ```
+
+**B. System-Calculation (for Accounting):**
+```
+Accounting AI = Nominal × Coupon% × (Days/365)
+
+Example:
+Nominal:                10,000,000 THB
+Coupon Rate:            3.85%
+Days since last coupon: 17 days
+
+Accounting AI = 10,000,000 × 3.85% × (17/365) = 17,931.51 THB
+→ Used for: GL accrual journals, Daily interest income/expense
+```
+
+> **Why Different?**
+> - ThaiBMA calculates AI from their reference point (issue date)
+> - System calculates from position's actual acquisition/settlement
+> - They may differ due to timing and calculation conventions
 
 ---
 
@@ -888,11 +898,12 @@ WHERE import_date = CURRENT_DATE;
 | WAC (Buy) | `(OldCost + NewCost) / (OldQty + NewQty)` |
 | Realized P&L | `(Sell - WAC) × Qty / 100` |
 | Unrealized P&L | `Market - Book` |
-| **Market Data** | |
+| **Market Data (Valuation)** | |
 | Price Change % | `|Today - Yesterday| / Yesterday × 100` |
-| Dirty Price | `Clean + AI%` |
-| Market Value | `Nominal × (Clean + AI%) / 100` |
-| Accrued Amount | `Nominal × AI% / 100` |
+| Dirty Price | `Clean + ThaiBMA_AI%` |
+| Market Value | `Nominal × (Clean + ThaiBMA_AI%) / 100` |
+| **Accrued Interest (Accounting)** | |
+| Daily Accrual | `Nominal × Coupon% × (Days/365)` |
 
 ---
 

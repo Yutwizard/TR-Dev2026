@@ -1688,10 +1688,19 @@ ThaiBMA Portal
 | Coupon | coupon_rate | thaibma_market_data | Verification |
 | Maturity | maturity_date | thaibma_market_data | Verification |
 | Clean Price % | clean_price | thaibma_market_data | **Primary MTM** |
-| AI % | accrued_interest | thaibma_market_data | Dirty price calc |
+| AI % | accrued_interest | thaibma_market_data | **Dirty Price calc** |
 | Market Yield % | market_yield | thaibma_market_data | Risk reporting |
 | Modified Duration* | modified_duration | thaibma_market_data | Risk metrics |
 | Convexity | convexity | thaibma_market_data | Risk metrics |
+
+> **⚠️ Important Distinction:**
+> | Use Case | Source | Formula |
+> |----------|--------|---------|
+> | **Dirty Price (Valuation)** | ThaiBMA | `Clean Price + AI%` |
+> | **Accrued Interest (Accounting)** | System Calc | `Nominal × Coupon% × (Days/365)` |
+>
+> ThaiBMA AI% is used for **market value/dirty price** calculations only.
+> System-calculated accrued interest is used for **GL journals and accounting**.
 
 ---
 
