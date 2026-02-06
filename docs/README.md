@@ -1,6 +1,6 @@
 # Treasury Management System Documentation
 
-**Last Updated:** February 5, 2026
+**Last Updated:** February 6, 2026
 
 ---
 
@@ -33,6 +33,8 @@
 |----------|---------|
 | [Development Guide](./03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md) | Build the system (10-week plan) |
 | [Setup Instructions](./03-IMPLEMENTATION/SETUP_INSTRUCTIONS.md) | Local environment setup |
+| [API Reference](./03-IMPLEMENTATION/API_REFERENCE.md) | REST API endpoints & examples |
+| [Testing Guide](./03-IMPLEMENTATION/TESTING_GUIDE.md) | Unit, integration & E2E testing |
 
 ---
 
@@ -56,7 +58,10 @@ docs/
 │
 ├── 03-IMPLEMENTATION/           ← Developer docs
 │   ├── DEVELOPMENT_GUIDE.md     ← Build guide
-│   └── SETUP_INSTRUCTIONS.md    ← Environment setup
+│   ├── SETUP_INSTRUCTIONS.md    ← Environment setup
+│   ├── API_REFERENCE.md         ← REST API reference  ✨ NEW
+│   ├── TESTING_GUIDE.md         ← Testing strategy    ✨ NEW
+│   └── MISSING_SERVICES_BACKLOG.md ← Pending services
 │
 ├── 04-OPERATIONS/               ← Operations docs
 │   ├── DAILY_OPERATIONS.md      ← Daily procedures
@@ -77,7 +82,9 @@ docs/
 | Field Workflow Mapping | ✅ Current | Feb 5, 2026 |
 | Pre-Transaction Setup | ✅ Current | Feb 5, 2026 |
 | Development Guide | ✅ Current | Feb 5, 2026 |
-| Setup Instructions | ⚠️ Verify | Feb 5, 2026 |
+| Setup Instructions | ✅ Current | Feb 5, 2026 |
+| **API Reference** | ✅ **NEW** | Feb 6, 2026 |
+| **Testing Guide** | ✅ **NEW** | Feb 6, 2026 |
 | Daily Operations | ✅ Current | Feb 5, 2026 |
 | Stakeholder Checklist | ✅ Current | Feb 5, 2026 |
 
