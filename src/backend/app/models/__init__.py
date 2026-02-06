@@ -35,6 +35,10 @@ from app.models.limits import (
     LimitUtilization,
     LimitBreach,
 )
+from app.models.market_data import (
+    ThaiBMAMarketData,
+    MarketDataImportLog,
+)
 
 __all__ = [
     # Base
@@ -68,4 +72,7 @@ __all__ = [
     "LimitDefinition",
     "LimitUtilization",
     "LimitBreach",
+    # Market Data
+    "ThaiBMAMarketData",
+    "MarketDataImportLog",
 ]

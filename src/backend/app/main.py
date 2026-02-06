@@ -21,6 +21,7 @@ from app.routers import (
     settlement_router,
 )
 from app.routers.master_data import router as master_data_router
+from app.routers.market_data import router as market_data_router
 
 # Configure logging
 logging.basicConfig(
@@ -89,6 +90,7 @@ app.include_router(interbank_router, prefix="/api/v1/interbank", tags=["Interban
 app.include_router(repo_router, prefix="/api/v1/repo", tags=["Repo Trades"])
 app.include_router(settlement_router, prefix="/api/v1/settlement", tags=["Settlement"])
 app.include_router(master_data_router, prefix="/api/v1/master", tags=["Master Data"])
+app.include_router(market_data_router, prefix="/api/v1/market-data", tags=["Market Data"])
 
 
 @app.get("/", include_in_schema=False)

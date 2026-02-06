@@ -102,6 +102,7 @@ class SecurityMaster(Base, TimestampMixin, AuditMixin):
     
     # Relationships
     issuer = relationship("EntityMaster", foreign_keys=[issuer_id])
+    market_data = relationship("ThaiBMAMarketData", back_populates="security")
     
     # Indexes and Constraints
     __table_args__ = (

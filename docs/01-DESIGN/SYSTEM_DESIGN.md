@@ -148,6 +148,7 @@
 | **Transaction** | bond_trades, bond_transactions, interbank_deals, interbank_interest_schedule, repo_trades | Event-driven deal capture |
 | **Position/Collateral** | collateral_positions, bond_positions, position_costing, position_realization_events | Derived holding information |
 | **Control/Risk** | margin_calls, cash_margin_movements, limit_utilization, entity_counterparty | Limits, margin, audit |
+| **Market Data** | **thaibma_market_data**, **market_data_import_log** | Daily EOD prices from ThaiBMA |
 
 ### 4.2 Key Relationships
 
@@ -166,7 +167,8 @@ security_master
     ↓ security_id
     ├── bond_trades
     ├── bond_positions
-    └── collateral_positions
+    ├── collateral_positions
+    └── **thaibma_market_data** (daily prices)
 
 portfolio_master
     ↓ portfolio_id

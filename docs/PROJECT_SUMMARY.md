@@ -555,13 +555,13 @@ data/extracted/
 | Metric | Value |
 |--------|-------|
 | **API Routes** | 94 |
-| **Database Tables** | 18 |
+| **Database Tables** | 20 |
 | **Service Modules** | 6 |
 | **Documentation** | 10 core documents |
 | **Lines of Documentation** | 6,000+ |
 | **Database Fields Mapped** | 272 (100% coverage) |
 | **Interactive Portal Flows** | 10 categories |
-| **Git Commits** | 18+
+| **Git Commits** | 19+
 | **Sprints Complete** | 2 |
 | **Git Commits** | 15+ |
 
