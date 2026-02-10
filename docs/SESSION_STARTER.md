@@ -39,7 +39,8 @@ Read in this exact order:
 - ⏳ **Bond Process Review**: In Progress - Awaiting stakeholder feedback
 
 > ⚠️ **Important:** 
-> - Interbank & Repo Services are fully functional with passing tests (9/9).
+> - Interbank & Repo Services are fully functional with **20/20 tests passing** (15 repo + 5 interbank).
+> - Enum & State Machine bugs found and fixed during review.
 > - Next critical task is **Position Management** (aggregating trades).
 
 ### Pending User Action
@@ -50,7 +51,7 @@ User chooses between Position Management (Backend) or Frontend Development.
 ### Current Git Branch
 ```
 main
-Latest: Feb 10 Implement Repo Service & Fix Tests
+Latest: Feb 10 Repo Service + 20/20 Tests + Enum/State Machine Fixes
 ```
 
 ---
@@ -117,11 +118,13 @@ Estimate: 2-3 days
 3. Validate DAILY_OPERATIONS.md with Back Office
 ```
 
-### Option 3: Frontend Development
+### 📋 Backlog (Future Improvements)
 ```
-- Create UI mockups based on TRANSACTION_FLOW_DIAGRAMS.md
-- Design trade entry screens
-- Plan dashboard layouts
+1. Standalone collateral_service.py (currently embedded in RepoService)
+2. Market Data Integration for real-time collateral pricing (currently Par)
+3. repo_subtype input in RepoTradeCreate (currently hardcoded BILATERAL)
+4. datetime.utcnow() → datetime.now(datetime.UTC) migration
+5. Pydantic V2 ConfigDict migration
 ```
 
 ---
@@ -230,16 +233,81 @@ http://localhost:8000/docs
 **Document End**
 ```
 
+
+---
+
+## 📋 Task List for Tomorrow (Feb 11, 2026)
+
+### 🔴 Start Here: Documentation Fixes (30 min)
+
+```
+[ ] Task #2: Fix PART 5 file structure in PROJECT_SUMMARY.md (lines 462-495)
+[ ] Task #3: Update stats table service count in PROJECT_SUMMARY.md (line 152)
+[ ] Task #4: Fix Pending Items table in SESSION_STARTER.md (lines 172-178)
+[ ] Task #5: Update Recent Changes section in SESSION_STARTER.md (lines 197-209)
+[ ] Task #6: Delete or merge docs/04-IMPLEMENTATION/ folder
+```
+
+### 🟡 Then: Development Options
+
+**Option A: Sprint 4 - Position Management (RECOMMENDED)**
+```bash
+# Aggregate Bond, Interbank, Repo trades into real-time positions
+Files to update:
+- src/backend/app/services/position_service.py (already exists, needs enhancement)
+- tests/test_position_service.py (create new)
+
+Estimate: 2-3 days
+```
+
+**Option B: Frontend Development**
+```bash
+# Investigate src/frontend/ scope first (Task #11)
+# Then build UI for Trade Capture
+```
+
+**Option C: Documentation Enhancement**
+```bash
+# Tasks #8-10: Document missing services, tests, verify API count
+Estimate: 4 hours
+```
+
+### 🟢 Backlog: Tech Debt (When Time Permits)
+
+```
+- Replace datetime.utcnow() → datetime.now(datetime.UTC)
+- Migrate Pydantic V2 ConfigDict
+- Extract collateral_service.py from RepoService
+- Integrate Market Data for repo collateral pricing
+- Add repo_subtype input to schema
+```
+
+### 📊 Current Status Snapshot
+
+| Component | Status | Tests |
+|-----------|--------|-------|
+| Sprint 1 (Foundation) | ✅ Complete | N/A |
+| Sprint 2 (Bond Trading) | ✅ Complete | N/A |
+| Sprint 3 (Interbank) | ✅ Complete | 5/5 ✅ |
+| Sprint 3 (Repo) | ✅ Complete | 15/15 ✅ |
+| Sprint 4 (Positions) | ⏳ Partial | Needs tests |
+| Documentation | ⚠️ 95% | 5 fixes pending |
+
+**Total Tests:** 20/20 passing ✅
+
 ---
 
 ## ❓ If Unsure What To Do
 
-1. Read PROJECT_SUMMARY.md fully
+1. Read PROJECT_SUMMARY.md fully (especially new PART 8: Task List)
 2. Check latest git log: `git log --oneline -5`
-3. Ask user: "Would you like to (1) Stakeholder review, (2) Sprint 3 dev, or (3) Something else?"
+3. Start with documentation fixes (Tasks #2-6) — quick wins!
+4. Then choose Sprint 4 (Position Management) for development work
 
 ---
 
 **END OF SESSION STARTER**
+
+*Last Updated: February 10, 2026 13:47 ICT*
 
 *Read the 4 files listed at the top, then proceed based on user's direction*

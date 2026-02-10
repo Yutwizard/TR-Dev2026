@@ -20,9 +20,9 @@ This document combines all development work from February 2-3, 2026:
 | **Feb 10** | Architecture & Interbank | Phase 0 Cleanup (Enums, Audit), Interbank Service Refactor, EOD Batch Script, Unit Tests |
 
 **Total Output:**
-- 94 API endpoints
+- 94+ API endpoints
 - **20 database tables** (was 18, added ThaiBMA market data tables)
-- 6 service modules
+- **10 service modules** (bond_trade, thaibma, position, interbank, repo, calculation_engine, audit, calendar, market_data, settlement)
 - **10 core documents**
 
 ---
@@ -574,30 +574,145 @@ data/extracted/
   - `POST /{ref}/early-terminate`: Early termination
   - `POST /{ref}/margin-call`: Margin status check
 
-#### 3. Quality Assurance
-- **Unit Tests**: `tests/test_repo_service.py` (4 tests covering lifecycle).
+#### 3. Enum & State Machine Fixes
+- Added `NEAR_LEG_SETTLED` and `EARLY_TERMINATED` to `TradeStatus` enum (were missing → runtime crash).
+- Aligned `REPO_TRADE_TRANSITIONS` state machine: `APPROVED → ACTIVE` (removed unused `PENDING_SETTLEMENT` step), added `EARLY_TERMINATED` terminal state.
+
+#### 4. Quality Assurance
+- **Unit Tests**: `tests/test_repo_service.py` — expanded from 4 → **15 tests**:
+  - Lifecycle: Create, Approve, Cancel, Four-Eyes Reject
+  - Settlement: Near Leg, Far Leg, Far Leg wrong status
+  - Early Termination: Success, wrong status, date before start
+  - Margin Call: Triggered, not triggered, wrong status
+  - Collateral Summary: Aggregation with REPO + REVERSE_REPO
 - **Interbank Fix**: Fixed `test_interbank_service.py` mocking logic (5 tests passing).
-- **Total Tests Passing**: 9/9.
+- **Total Tests Passing**: **20/20** (15 repo + 5 interbank).
 
 ---
 
-## PART 7: Next Steps
+## PART 7: Backlog & Next Steps
 
-### Option 1: Sprint 4 (Position Management) - RECOMMENDED
+### 🔴 Future Improvements (Noted for Later)
+1. **Standalone `collateral_service.py`** — Currently collateral logic is embedded in `RepoService`. Extract to its own service when complexity grows (substitution, multi-collateral per trade).
+2. **Market Data Integration** — `RepoService.create_trade()` assumes Par (100) for collateral valuation. Integrate with `MarketDataService` for real-time bond pricing from ThaiBMA.
+3. **`repo_subtype` Input** — `RepoTradeCreate` schema hardcodes `repo_type="BILATERAL"`. Add `repo_subtype` field to support `BOT_BRP` and other types.
+4. **`datetime.utcnow()` Deprecation** — Replace with `datetime.now(datetime.UTC)` across all services (pytest warnings).
+5. **Pydantic V2 ConfigDict** — Migrate class-based `Config` to `model_config = ConfigDict(...)` in schemas.
+
+### ⏭️ Next Priority Options
+
+#### Option 1: Sprint 4 (Position Management) - RECOMMENDED
 Aggregation of Bond, Interbank, and Repo trades into real-time positions.
 - **Service**: Update `position_service.py` to ingest Repo/Interbank.
 - **Calculations**: WAC (Weighted Average Cost) for Bonds, Cash impact for Money Market.
 - **EOD**: End-of-Day position snapshots.
 
-### Option 2: Frontend Development
+#### Option 2: Frontend Development
 - Build UI for Trade Entry (Bond/Repo/Interbank).
 - Integrate with new APIs.
 
-### Option 3: Stakeholder Review
+#### Option 3: Stakeholder Review
 - Review implemented logic with business users.
+
+---
+
+## PART 8: Task List for Next Session (Feb 11, 2026)
+
+### 🔴 HIGH PRIORITY: Documentation Fixes
+
+| # | Task | File | Lines | Status |
+|---|------|------|-------|--------|
+| 1 | ✅ Update service count 6→10 | PROJECT_SUMMARY.md | 25 | **DONE (Feb 10)** |
+| 2 | Update PART 5 file structure | PROJECT_SUMMARY.md | 462-495 | ⏳ TODO |
+| 3 | Update stats table (service count) | PROJECT_SUMMARY.md | 146-156 | ⏳ TODO |
+| 4 | Fix Pending Items table | SESSION_STARTER.md | 172-178 | ⏳ TODO |
+| 5 | Update Recent Changes section | SESSION_STARTER.md | 197-209 | ⏳ TODO |
+| 6 | Clean up `docs/04-IMPLEMENTATION/` | File system | - | ⏳ TODO |
+
+### 🟡 MEDIUM PRIORITY: Development Work
+
+| # | Task | Estimate | Dependencies |
+|---|------|----------|--------------|
+| 7 | **Sprint 4: Position Management** | 2-3 days | None |
+| 8 | Document additional services (calendar, market_data, settlement) | 2 hours | Task #2 |
+| 9 | Document additional test files in `app/tests/` | 1 hour | None |
+| 10 | Verify actual API endpoint count (claimed 94+) | 1 hour | None |
+| 11 | Investigate `src/frontend/` scope | 1 hour | None |
+
+### 🟢 LOW PRIORITY: Tech Debt
+
+| # | Task | Estimate | Notes |
+|---|------|----------|-------|
+| 12 | Replace `datetime.utcnow()` with `datetime.now(datetime.UTC)` | 2 hours | Across all services |
+| 13 | Migrate Pydantic V2 ConfigDict | 3 hours | Update all schemas |
+| 14 | Extract standalone `collateral_service.py` | 1 day | Currently in RepoService |
+| 15 | Integrate Market Data for repo collateral pricing | 2 days | Currently assumes Par (100) |
+| 16 | Add `repo_subtype` input to RepoTradeCreate schema | 1 hour | Currently hardcoded BILATERAL |
+
+### 📋 Detailed Fix Instructions
+
+#### Task #2: Update PART 5 File Structure
+**Current (Outdated):**
+```
+docs/
+├── PROJECT_SESSION_SUMMARY.md
+├── Treasury_System_Detailed_Design_Input.md
+└── Field_Update_Matrix.md
+```
+
+**Should be:**
+```
+docs/
+├── README.md
+├── PROJECT_SUMMARY.md
+├── SESSION_STARTER.md
+├── 01-DESIGN/
+│   ├── SYSTEM_DESIGN.md
+│   └── FIELD_REFERENCE.md
+├── 02-PROCESSES/
+│   ├── TRANSACTION_WORKFLOWS.md
+│   ├── FIELD_WORKFLOW_MAPPING.md
+│   ├── PRE_TRANSACTION_SETUP.md
+│   ├── TRANSACTION_FLOW_DIAGRAMS.md
+│   └── transaction_flow.html
+├── 03-IMPLEMENTATION/
+│   ├── DEVELOPMENT_GUIDE.md
+│   ├── SETUP_INSTRUCTIONS.md
+│   ├── API_REFERENCE.md
+│   ├── TESTING_GUIDE.md
+│   └── MISSING_SERVICES_BACKLOG.md
+├── 04-OPERATIONS/
+│   ├── DAILY_OPERATIONS.md
+│   ├── STAKEHOLDER_CHECKLIST.md
+│   └── MANUAL_CALCULATION_GUIDE.md
+└── archive/
+```
+
+#### Task #3: Update Stats Table
+**Location:** PROJECT_SUMMARY.md lines 146-156
+**Change:** Line 152: `| Service Modules | 6 |` → `| Service Modules | 10 |`
+
+#### Task #4: Fix Pending Items Table
+**Location:** SESSION_STARTER.md lines 172-178
+**Change:** Update Sprint 3 row:
+```markdown
+| Sprint 3 Implementation | ✅ Complete | Interbank + Repo (20/20 tests passing) |
+```
+
+#### Task #5: Update Recent Changes
+**Location:** SESSION_STARTER.md lines 197-209
+**Change:** Update header to `## 🔄 Recent Changes (Feb 6-10)` and add Feb 10 bullet points
+
+#### Task #6: Clean Up Duplicate Folder
+**Action:** 
+1. Check contents of `docs/04-IMPLEMENTATION/`
+2. If empty or duplicate, delete
+3. If contains unique files, merge into `03-IMPLEMENTATION/`
 
 ---
 
 **End of Combined Session Summary**
 
-*Sprints 1-3 (Part 1) Complete | Repo Service Complete | Documentation Restructure Complete | Field Alignment Complete | Interactive Portal Created | Awaiting Bond Process Review*
+*Sprints 1-3 Complete | 20/20 Tests Passing | Documentation Restructure Complete | Field Alignment Complete | Interactive Portal Created | Awaiting Bond Process Review*
+
+**Last Updated:** February 10, 2026 13:47 ICT
