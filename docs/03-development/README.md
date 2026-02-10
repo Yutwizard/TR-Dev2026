@@ -28,12 +28,12 @@ How to write and run tests:
 - Test fixtures and mocks
 - Coverage requirements
 
-### [Missing Services Backlog](./guides/MISSING_SERVICES_BACKLOG.md)
-Planned features and enhancements:
-- Pending implementations
-- Feature requests
-- Technical debt items
-- Roadmap priorities
+### [Future Enhancements](./guides/FUTURE_ENHANCEMENTS.md)
+Roadmap and planned features:
+- Upcoming enhancements (Margin Call automation, etc.)
+- Feature requests and priorities
+- Technical debt tracking
+- Quarterly roadmap
 
 ---
 
