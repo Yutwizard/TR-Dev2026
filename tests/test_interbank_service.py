@@ -24,7 +24,7 @@ def mock_db():
         # DEBUG
         # print(f"DEBUG: Querying model: {model} (Type: {type(model)})")
 
-        if model == CounterpartyMaster or "CounterpartyMaster" in str(model):
+        if model is CounterpartyMaster or "CounterpartyMaster" in str(model):
             # Return a valid counterparty
             mock_cp = MagicMock()
             mock_cp.counterparty_id = "CP_KBANK"
@@ -32,7 +32,7 @@ def mock_db():
             mock_query.filter.return_value.first.return_value = mock_cp
             return mock_query
             
-        elif model == LimitDefinition:
+        elif model is LimitDefinition:
             # Return no limit (None) -> Success
             mock_query.filter.return_value.first.return_value = None
             return mock_query
@@ -77,8 +77,10 @@ def test_create_deal_success(service, mock_db):
     assert deal.status == TradeStatus.PENDING_APPROVAL
     
     # Verify DB add called
-    mock_db.add.assert_called_once()
-    assert mock_db.add.call_args[0][0] == deal
+    # Verify DB add called for deal
+    # mock_db.add.assert_called_once() # Called twice (Deal + Audit)
+    mock_db.add.assert_any_call(deal)
+    # assert mock_db.add.call_args[0][0] == deal
 
 def test_create_deal_validation_fail(service):
     """Test validation failure (maturity before start)"""

@@ -112,15 +112,15 @@ INTERBANK_DEAL_TRANSITIONS: Dict[str, List[str]] = {
 # Repo Trade Lifecycle
 # =============================================================================
 #
-# DRAFT → PENDING_APPROVAL → APPROVED → PENDING_SETTLEMENT → ACTIVE 
-#   ↓        ↓                  ↓                                ↓
-# CANCELLED REJECTED         CANCELLED                     [Daily MTM]
-#            ↓                                                   ↓
-#          DRAFT                                         MARGIN_CALL (if needed)
-#                                                              ↓
-#                                                            ACTIVE (after margin settled)
-#                                                              ↓
-#                                                           MATURED
+# DRAFT → PENDING_APPROVAL → APPROVED → ACTIVE (near leg settled)
+#   ↓        ↓                  ↓          ↓
+# CANCELLED REJECTED         CANCELLED  [Daily MTM]
+#            ↓                              ↓
+#          DRAFT                      MARGIN_CALL (if needed)
+#                                           ↓
+#                                         ACTIVE (after margin settled)
+#                                           ↓
+#                                      MATURED / EARLY_TERMINATED
 #
 REPO_TRADE_TRANSITIONS: Dict[str, List[str]] = {
     TradeStatus.DRAFT: [
@@ -133,25 +133,23 @@ REPO_TRADE_TRANSITIONS: Dict[str, List[str]] = {
         TradeStatus.CANCELLED,
     ],
     TradeStatus.APPROVED: [
-        TradeStatus.PENDING_SETTLEMENT,  # Collateral allocation
+        TradeStatus.ACTIVE,              # Near leg settled directly
         TradeStatus.CANCELLED,
     ],
     TradeStatus.REJECTED: [
         TradeStatus.DRAFT,
     ],
-    TradeStatus.PENDING_SETTLEMENT: [
-        TradeStatus.ACTIVE,              # Near leg settled
-        TradeStatus.CANCELLED,
-    ],
     TradeStatus.ACTIVE: [
         TradeStatus.MARGIN_CALL,         # Margin threshold breached
         TradeStatus.MATURED,             # Far leg settlement
-        TradeStatus.CANCELLED,           # Early termination
+        TradeStatus.EARLY_TERMINATED,    # Early termination
+        TradeStatus.CANCELLED,
     ],
     TradeStatus.MARGIN_CALL: [
         TradeStatus.ACTIVE,              # Margin call resolved
     ],
     TradeStatus.MATURED: [],             # Terminal state
+    TradeStatus.EARLY_TERMINATED: [],    # Terminal state
     TradeStatus.CANCELLED: [],           # Terminal state
 }
 

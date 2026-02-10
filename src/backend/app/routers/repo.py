@@ -3,19 +3,7 @@ Treasury Management System - Repo/Reverse Repo Router
 ======================================================
 
 API endpoints for managing repo and reverse repo transactions.
-
-Repo = Sell securities with agreement to repurchase (borrowing cash)
-Reverse Repo = Buy securities with agreement to resell (lending cash)
-
-Endpoints:
-- GET /: List repo trades
-- POST /: Create new repo
-- GET /{trade_ref}: Get trade details
-- POST /{trade_ref}/approve: Approve trade
-- POST /{trade_ref}/start-leg-settle: Settle near leg
-- POST /{trade_ref}/end-leg-settle: Settle far leg
-- GET /collateral-summary: Collateral position summary
-- POST /{trade_ref}/margin-call: Calculate/trigger margin call
+delegates logic to RepoService.
 """
 
 from datetime import date, datetime
@@ -24,46 +12,24 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from enum import Enum
+from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_active_user, UserInToken
-
+from app.db.session import get_db
+from app.services.repo_service import RepoService
+from app.models.transactions import RepoTrade
+from app.core.enums import RepoTradeType, TradeStatus
 
 router = APIRouter()
 
 
 # =============================================================================
-# Enums
-# =============================================================================
-class RepoType(str, Enum):
-    REPO = "REPO"           # Sell and repurchase (borrow cash)
-    REVERSE_REPO = "REVERSE_REPO"  # Buy and resell (lend cash)
-
-
-class TradeStatus(str, Enum):
-    DRAFT = "DRAFT"
-    PENDING_APPROVAL = "PENDING_APPROVAL"
-    APPROVED = "APPROVED"
-    NEAR_LEG_SETTLED = "NEAR_LEG_SETTLED"
-    ACTIVE = "ACTIVE"
-    FAR_LEG_SETTLED = "FAR_LEG_SETTLED"
-    MATURED = "MATURED"
-    EARLY_TERMINATED = "EARLY_TERMINATED"
-    CANCELLED = "CANCELLED"
-
-
-class SettlementStatus(str, Enum):
-    PENDING = "PENDING"
-    PROCESSING = "PROCESSING"
-    SETTLED = "SETTLED"
-    FAILED = "FAILED"
-
-
-# =============================================================================
 # Request/Response Models
 # =============================================================================
+
 class RepoTradeCreate(BaseModel):
     """Request to create a new repo/reverse repo trade"""
-    repo_type: RepoType = Field(..., description="REPO or REVERSE_REPO")
+    repo_type: RepoTradeType = Field(..., description="REPO or REVERSE_REPO")
     counterparty_id: str = Field(..., max_length=40)
     portfolio_id: str = Field(..., max_length=40)
     currency: str = Field(default="THB", max_length=3)
@@ -83,12 +49,12 @@ class RepoTradeCreate(BaseModel):
 
 class CollateralInfo(BaseModel):
     """Collateral details"""
-    security_id: str
-    isin: str
-    security_name: str
-    face_value: Decimal
-    market_price: Decimal
-    market_value: Decimal
+    security_id: Optional[str]
+    isin: Optional[str]
+    security_name: Optional[str]
+    face_value: Optional[Decimal]
+    market_price: Optional[Decimal]
+    market_value: Optional[Decimal]
     haircut_pct: Decimal
     collateral_value: Decimal
 
@@ -101,7 +67,6 @@ class RepoTradeResponse(BaseModel):
     repo_type: str
     entity_id: str
     counterparty_id: str
-    counterparty_name: str
     portfolio_id: str
     currency: str
     # Cash
@@ -117,11 +82,10 @@ class RepoTradeResponse(BaseModel):
     tenor_days: int
     # Collateral
     collateral: CollateralInfo
-    haircut_pct: Decimal
-    initial_margin: Decimal
-    current_margin: Decimal
+    # Margins
+    initial_margin: Optional[Decimal]
+    current_margin: Optional[Decimal]
     margin_call_threshold: Decimal
-    margin_call_amount: Decimal
     # Status
     status: str
     near_leg_cash_status: str
@@ -135,6 +99,9 @@ class RepoTradeResponse(BaseModel):
     early_termination_date: Optional[date]
     created_at: datetime
     updated_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
 
 
 class RepoTradeListResponse(BaseModel):
@@ -154,153 +121,105 @@ class CollateralSummary(BaseModel):
     margin_calls_pending: int
 
 
-class MarginCallResult(BaseModel):
-    """Margin call calculation result"""
-    trade_ref: str
-    current_margin_pct: Decimal
-    required_margin_pct: Decimal
-    margin_call_triggered: bool
-    margin_call_amount: Decimal
-    margin_call_direction: str  # "DELIVER" or "RETURN"
-    calculated_at: datetime
-
-
 # =============================================================================
-# Mock Data
+# Helper
 # =============================================================================
-def generate_trade_ref() -> str:
-    from uuid import uuid4
-    return f"RP{datetime.now().strftime('%Y%m%d')}{str(uuid4())[:6].upper()}"
 
+def map_trade_to_response(trade: RepoTrade) -> RepoTradeResponse:
+    # Calculate derived/nested fields for response
+    collateral_val = trade.collateral_market_value or Decimal("0")
+    face_val = trade.collateral_face_value or Decimal("0")
+    
+    # Simple price derivation (avoid division by zero)
+    market_price = (collateral_val / face_val * 100) if face_val > 0 else Decimal("0")
+    
+    # Collateral Value (post-haircut)
+    post_haircut_val = collateral_val * (1 - (trade.haircut_pct or 0) / 100)
+    
+    collateral_info = CollateralInfo(
+        security_id=trade.collateral_security_id,
+        isin=trade.collateral_isin,
+        security_name=trade.collateral_security.security_name if trade.collateral_security else None,
+        face_value=face_val,
+        market_price=round(market_price, 4),
+        market_value=collateral_val,
+        haircut_pct=trade.haircut_pct or Decimal("0"),
+        collateral_value=round(post_haircut_val, 2)
+    )
 
-MOCK_REPO_TRADES = [
-    RepoTradeResponse(
-        trade_id="TRADE001",
-        trade_ref="RP202502010001",
-        external_ref=None,
-        repo_type="REPO",
-        entity_id="BANK001",
-        counterparty_id="CPTY001",
-        counterparty_name="Bangkok Bank PCL",
-        portfolio_id="PORT001",
-        currency="THB",
-        near_leg_amount=Decimal("100000000.00"),
-        far_leg_amount=Decimal("100136986.30"),
-        repo_rate=Decimal("2.50"),
-        day_count_convention="ACT/365",
-        interest_amount=Decimal("136986.30"),
-        trade_date=date(2025, 2, 1),
-        start_date=date(2025, 2, 3),
-        end_date=date(2025, 2, 23),
-        tenor_days=20,
-        collateral=CollateralInfo(
-            security_id="SEC001",
-            isin="TH0623A3B702",
-            security_name="LB236A - Government Bond 2.5% 2036",
-            face_value=Decimal("100000000.00"),
-            market_price=Decimal("102.50"),
-            market_value=Decimal("102500000.00"),
-            haircut_pct=Decimal("2.0"),
-            collateral_value=Decimal("100450000.00")
-        ),
-        haircut_pct=Decimal("2.0"),
-        initial_margin=Decimal("102.50"),
-        current_margin=Decimal("102.45"),
-        margin_call_threshold=Decimal("2.0"),
-        margin_call_amount=Decimal("0"),
-        status="ACTIVE",
-        near_leg_cash_status="SETTLED",
-        near_leg_collateral_status="SETTLED",
-        far_leg_cash_status="PENDING",
-        far_leg_collateral_status="PENDING",
-        trader_id="TRADER001",
-        approver_id="SUP001",
-        is_early_terminated=False,
-        early_termination_date=None,
-        created_at=datetime.now(),
-        updated_at=None
-    ),
-    RepoTradeResponse(
-        trade_id="TRADE002",
-        trade_ref="RP202502020001",
-        external_ref=None,
-        repo_type="REVERSE_REPO",
-        entity_id="BANK001",
-        counterparty_id="CPTY002",
-        counterparty_name="Kasikornbank PCL",
-        portfolio_id="PORT001",
-        currency="THB",
-        near_leg_amount=Decimal("50000000.00"),
-        far_leg_amount=Decimal("50041095.89"),
-        repo_rate=Decimal("2.30"),
-        day_count_convention="ACT/365",
-        interest_amount=Decimal("41095.89"),
-        trade_date=date(2025, 2, 2),
-        start_date=date(2025, 2, 3),
-        end_date=date(2025, 2, 16),
-        tenor_days=13,
-        collateral=CollateralInfo(
-            security_id="SEC002",
-            isin="TH0623031R17",
-            security_name="ThaiBMA Bill 1.75% 2025",
-            face_value=Decimal("51000000.00"),
-            market_price=Decimal("99.85"),
-            market_value=Decimal("50923500.00"),
-            haircut_pct=Decimal("1.5"),
-            collateral_value=Decimal("50159648.00")
-        ),
-        haircut_pct=Decimal("1.5"),
-        initial_margin=Decimal("101.50"),
-        current_margin=Decimal("101.82"),
-        margin_call_threshold=Decimal("2.0"),
-        margin_call_amount=Decimal("0"),
-        status="PENDING_APPROVAL",
-        near_leg_cash_status="PENDING",
-        near_leg_collateral_status="PENDING",
-        far_leg_cash_status="PENDING",
-        far_leg_collateral_status="PENDING",
-        trader_id="TRADER001",
-        approver_id=None,
-        is_early_terminated=False,
-        early_termination_date=None,
-        created_at=datetime.now(),
-        updated_at=None
-    ),
-]
+    return RepoTradeResponse(
+        trade_id=trade.trade_id,
+        trade_ref=trade.trade_ref,
+        external_ref=trade.external_ref,
+        repo_type=trade.trade_type,  # Map REPO/REVERSE_REPO to response field
+        entity_id=trade.entity_id,
+        counterparty_id=trade.counterparty_id,
+        portfolio_id=trade.portfolio_id,
+        currency=trade.currency,
+        near_leg_amount=trade.near_leg_amount,
+        far_leg_amount=trade.far_leg_amount,
+        repo_rate=trade.repo_rate,
+        day_count_convention=trade.day_count_convention,
+        interest_amount=trade.interest_amount,
+        trade_date=trade.trade_date,
+        start_date=trade.start_date,
+        end_date=trade.end_date,
+        tenor_days=(trade.end_date - trade.start_date).days,
+        collateral=collateral_info,
+        initial_margin=trade.initial_margin,
+        current_margin=trade.current_margin,
+        margin_call_threshold=trade.margin_call_threshold,
+        status=trade.status,
+        near_leg_cash_status=trade.near_leg_cash_status,
+        near_leg_collateral_status=trade.near_leg_collateral_status,
+        far_leg_cash_status=trade.far_leg_cash_status,
+        far_leg_collateral_status=trade.far_leg_collateral_status,
+        trader_id=trade.trader_id,
+        approver_id=trade.approver_id,
+        is_early_terminated=trade.is_early_terminated,
+        early_termination_date=trade.early_termination_date,
+        created_at=trade.created_at,
+        updated_at=trade.updated_at
+    )
 
 
 # =============================================================================
 # Endpoints
 # =============================================================================
+
 @router.get("", response_model=RepoTradeListResponse)
 async def list_repo_trades(
-    repo_type: Optional[RepoType] = Query(None),
+    repo_type: Optional[RepoTradeType] = Query(None),
     status: Optional[TradeStatus] = Query(None),
     counterparty_id: Optional[str] = Query(None),
     from_date: Optional[date] = Query(None),
     to_date: Optional[date] = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    List repo/reverse repo trades with filtering.
-    """
-    trades = MOCK_REPO_TRADES.copy()
+    """List repo/reverse repo trades with filtering."""
+    service = RepoService(db)
+    filters = {}
+    if repo_type: filters["repo_type"] = repo_type.value # DB field is 'trade_type'? No, 'repo_type' is BILATERAL. 'trade_type' is REPO/REVERSE_REPO
+    # Wait, Model has `trade_type` (REPO/REVERSE_REPO) AND `repo_type` (BILATERAL/BRP).
+    # The Query param `repo_type` corresponds to `trade_type` field in Model based on Enum values?
+    # Enum RepoType has REPO, REVERSE_REPO.
+    # So filters["trade_type"] = repo_type.value
     
-    if repo_type:
-        trades = [t for t in trades if t.repo_type == repo_type.value]
-    if status:
-        trades = [t for t in trades if t.status == status.value]
-    if counterparty_id:
-        trades = [t for t in trades if t.counterparty_id == counterparty_id]
+    if repo_type: filters["trade_type"] = repo_type.value
+    if status: filters["status"] = status.value
+    if counterparty_id: filters["counterparty_id"] = counterparty_id
+    if from_date: filters["date_from"] = from_date
+    if to_date: filters["date_to"] = to_date
+
+    trades, total = service.list_trades(skip=(page - 1) * size, limit=size, filters=filters)
     
-    total = len(trades)
-    start = (page - 1) * size
-    end = start + size
+    items = [map_trade_to_response(t) for t in trades]
     
     return RepoTradeListResponse(
-        items=trades[start:end],
+        items=items,
         total=total,
         page=page,
         size=size
@@ -309,299 +228,195 @@ async def list_repo_trades(
 
 @router.post("", response_model=RepoTradeResponse, status_code=status.HTTP_201_CREATED)
 async def create_repo_trade(
-    trade: RepoTradeCreate,
+    trade_in: RepoTradeCreate,
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    Create a new repo or reverse repo trade.
+    """Create a new repo/reverse repo trade."""
+    service = RepoService(db)
     
-    REPO: We sell securities and receive cash (borrow)
-    REVERSE_REPO: We buy securities and pay cash (lend)
-    """
-    if trade.end_date <= trade.start_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date must be after start date"
-        )
-    
-    tenor_days = (trade.end_date - trade.start_date).days
-    
-    # Calculate interest and far leg amount
-    interest = trade.near_leg_amount * trade.repo_rate / 100 * tenor_days / 365
-    far_leg_amount = trade.near_leg_amount + interest
-    
-    # Calculate collateral value after haircut
-    mock_price = Decimal("100.50")
-    market_value = trade.collateral_face_value * mock_price / 100
-    collateral_value = market_value * (1 - trade.haircut_pct / 100)
-    
-    # Check collateral coverage
-    if collateral_value < trade.near_leg_amount:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Insufficient collateral: value {collateral_value} < loan {trade.near_leg_amount}"
-        )
-    
-    trade_ref = generate_trade_ref()
-    
-    response = RepoTradeResponse(
-        trade_id=f"T{trade_ref}",
-        trade_ref=trade_ref,
-        external_ref=None,
-        repo_type=trade.repo_type.value,
-        entity_id="BANK001",
-        counterparty_id=trade.counterparty_id,
-        counterparty_name="Sample Counterparty",
-        portfolio_id=trade.portfolio_id,
-        currency=trade.currency,
-        near_leg_amount=trade.near_leg_amount,
-        far_leg_amount=round(far_leg_amount, 2),
-        repo_rate=trade.repo_rate,
-        day_count_convention="ACT/365",
-        interest_amount=round(interest, 2),
-        trade_date=date.today(),
-        start_date=trade.start_date,
-        end_date=trade.end_date,
-        tenor_days=tenor_days,
-        collateral=CollateralInfo(
-            security_id=trade.collateral_security_id,
-            isin=trade.collateral_isin,
-            security_name="Security (placeholder)",
-            face_value=trade.collateral_face_value,
-            market_price=mock_price,
-            market_value=market_value,
-            haircut_pct=trade.haircut_pct,
-            collateral_value=collateral_value
-        ),
-        haircut_pct=trade.haircut_pct,
-        initial_margin=collateral_value / trade.near_leg_amount * 100,
-        current_margin=collateral_value / trade.near_leg_amount * 100,
-        margin_call_threshold=trade.margin_call_threshold,
-        margin_call_amount=Decimal("0"),
-        status="PENDING_APPROVAL",
-        near_leg_cash_status="PENDING",
-        near_leg_collateral_status="PENDING",
-        far_leg_cash_status="PENDING",
-        far_leg_collateral_status="PENDING",
+    # Convert Pydantic to args
+    trade, validation = service.create_trade(
+        trade_type=trade_in.repo_type.value, # REPO or REVERSE_REPO
+        repo_type="BILATERAL", # Default or enhance input
+        counterparty_id=trade_in.counterparty_id,
+        portfolio_id=trade_in.portfolio_id,
+        start_date=trade_in.start_date,
+        end_date=trade_in.end_date,
+        near_leg_amount=trade_in.near_leg_amount,
+        repo_rate=trade_in.repo_rate,
         trader_id=current_user.user_id,
-        approver_id=None,
-        is_early_terminated=False,
-        early_termination_date=None,
-        created_at=datetime.now(),
-        updated_at=None
+        collateral_security_id=trade_in.collateral_security_id,
+        collateral_isin=trade_in.collateral_isin,
+        collateral_face_value=trade_in.collateral_face_value,
+        haircut_pct=trade_in.haircut_pct,
+        margin_call_threshold=trade_in.margin_call_threshold,
+        currency=trade_in.currency,
+        external_ref=None, # Or from input
+        notes=trade_in.notes
     )
+
+    if not trade:
+        # Construct error message from validation details
+        error_msg = "; ".join(validation.get("errors", []))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Validation Failed: {error_msg}"
+        )
     
-    return response
-
-
-@router.get("/pending-approval", response_model=List[RepoTradeResponse])
-async def get_pending_approval_trades(
-    current_user: UserInToken = Depends(get_current_active_user)
-):
-    """Get all repo trades pending approval."""
-    return [t for t in MOCK_REPO_TRADES if t.status == "PENDING_APPROVAL"]
+    try:
+        db.commit()
+        db.refresh(trade)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+        
+    return map_trade_to_response(trade)
 
 
 @router.get("/collateral-summary", response_model=CollateralSummary)
 async def get_collateral_summary(
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    Get summary of all collateral positions.
-    
-    Shows:
-    - Total pledged (collateral we gave)
-    - Total received (collateral we hold)
-    - Net position
-    - Breakdown by security
-    """
-    pledged = Decimal("0")
-    received = Decimal("0")
-    
-    for trade in MOCK_REPO_TRADES:
-        if trade.status in ["ACTIVE", "NEAR_LEG_SETTLED"]:
-            if trade.repo_type == "REPO":
-                pledged += trade.collateral.market_value
-            else:
-                received += trade.collateral.market_value
-    
-    return CollateralSummary(
-        total_pledged_value=pledged,
-        total_received_value=received,
-        net_collateral=received - pledged,
-        by_security=[
-            {
-                "isin": "TH0623A3B702",
-                "security_name": "LB236A",
-                "pledged_value": pledged,
-                "received_value": Decimal("0")
-            },
-            {
-                "isin": "TH0623031R17",
-                "security_name": "ThaiBMA Bill",
-                "pledged_value": Decimal("0"),
-                "received_value": received
-            }
-        ],
-        margin_calls_pending=0
-    )
+    """Get collateral position summary."""
+    service = RepoService(db)
+    summary = service.get_collateral_summary()
+    # Map dictionary to Pydantic if needed, but Pydantic handles dict nicely
+    return summary
 
 
 @router.get("/{trade_ref}", response_model=RepoTradeResponse)
 async def get_repo_trade(
     trade_ref: str,
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """Get repo trade details by reference."""
-    trade = next((t for t in MOCK_REPO_TRADES if t.trade_ref == trade_ref), None)
-    
+    """Get trade details."""
+    service = RepoService(db)
+    trade = service.get_trade(trade_ref)
     if not trade:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trade {trade_ref} not found"
-        )
-    
-    return trade
+        raise HTTPException(status_code=404, detail="Trade not found")
+    return map_trade_to_response(trade)
 
 
 @router.post("/{trade_ref}/approve", response_model=RepoTradeResponse)
 async def approve_repo_trade(
     trade_ref: str,
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    Approve a repo trade.
+    """Approve trade (Four-Eyes Principle)."""
+    service = RepoService(db)
+    trade, error = service.approve_trade(trade_ref, current_user.user_id)
     
-    Requires SUPERVISOR or ADMIN role.
-    Implements four-eyes principle.
-    """
-    trade = next((t for t in MOCK_REPO_TRADES if t.trade_ref == trade_ref), None)
-    
-    if not trade:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trade {trade_ref} not found"
-        )
-    
-    if trade.status != "PENDING_APPROVAL":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Trade is in {trade.status} status, cannot approve"
-        )
-    
-    if trade.trader_id == current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot approve your own trade (four-eyes principle)"
-        )
-    
-    updated = trade.model_copy(update={
-        "status": "APPROVED",
-        "approver_id": current_user.user_id,
-        "updated_at": datetime.now()
-    })
-    
-    return updated
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+        
+    db.commit()
+    db.refresh(trade)
+    return map_trade_to_response(trade)
 
 
-@router.post("/{trade_ref}/margin-call", response_model=MarginCallResult)
-async def calculate_margin_call(
+@router.post("/{trade_ref}/cancel", response_model=RepoTradeResponse)
+async def cancel_repo_trade(
     trade_ref: str,
-    current_market_price: Decimal = Query(..., description="Current market price of collateral"),
+    reason: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    Calculate margin call for a repo trade.
+    """Cancel trade."""
+    service = RepoService(db)
+    trade, error = service.cancel_trade(trade_ref, current_user.user_id, reason)
     
-    Based on current market price of the collateral security,
-    determines if a margin call is needed.
-    """
-    trade = next((t for t in MOCK_REPO_TRADES if t.trade_ref == trade_ref), None)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+        
+    db.commit()
+    db.refresh(trade)
+    return map_trade_to_response(trade)
+
+
+@router.post("/{trade_ref}/start-leg-settle", response_model=RepoTradeResponse)
+async def settle_near_leg(
+    trade_ref: str,
+    bahtnet_ref: Optional[str] = None,
+    custodian_ref: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: UserInToken = Depends(get_current_active_user)
+):
+    """Settle Near Leg."""
+    service = RepoService(db)
+    trade, error = service.settle_near_leg(trade_ref, current_user.user_id, bahtnet_ref, custodian_ref)
     
-    if not trade:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trade {trade_ref} not found"
-        )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+        
+    db.commit()
+    db.refresh(trade)
+    return map_trade_to_response(trade)
+
+
+@router.post("/{trade_ref}/end-leg-settle", response_model=RepoTradeResponse)
+async def settle_far_leg(
+    trade_ref: str,
+    db: Session = Depends(get_db),
+    current_user: UserInToken = Depends(get_current_active_user)
+):
+    """Settle Far Leg."""
+    service = RepoService(db)
+    trade, error = service.settle_far_leg(trade_ref, current_user.user_id)
     
-    if trade.status not in ["ACTIVE", "NEAR_LEG_SETTLED"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Margin call only applicable to active trades"
-        )
-    
-    # Recalculate margin with current price
-    new_market_value = trade.collateral.face_value * current_market_price / 100
-    new_collateral_value = new_market_value * (1 - trade.haircut_pct / 100)
-    current_margin_pct = new_collateral_value / trade.near_leg_amount * 100
-    required_margin_pct = Decimal("100.00")
-    
-    # Check if margin call triggered
-    margin_shortfall = required_margin_pct - current_margin_pct
-    margin_call_triggered = margin_shortfall > trade.margin_call_threshold
-    
-    if margin_call_triggered:
-        margin_call_amount = (margin_shortfall / 100) * trade.near_leg_amount
-        direction = "DELIVER" if trade.repo_type == "REPO" else "RETURN"
-    else:
-        margin_call_amount = Decimal("0")
-        direction = "NONE"
-    
-    return MarginCallResult(
-        trade_ref=trade_ref,
-        current_margin_pct=round(current_margin_pct, 2),
-        required_margin_pct=required_margin_pct,
-        margin_call_triggered=margin_call_triggered,
-        margin_call_amount=round(margin_call_amount, 2),
-        margin_call_direction=direction,
-        calculated_at=datetime.now()
-    )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+        
+    db.commit()
+    db.refresh(trade)
+    return map_trade_to_response(trade)
 
 
 @router.post("/{trade_ref}/early-terminate", response_model=RepoTradeResponse)
 async def early_terminate_repo(
     trade_ref: str,
-    termination_date: date = Query(...),
+    termination_date: date = Query(..., description="Date of early termination"),
+    db: Session = Depends(get_db),
     current_user: UserInToken = Depends(get_current_active_user)
 ):
-    """
-    Early terminate a repo trade.
+    """Early terminate a repo trade."""
+    service = RepoService(db)
+    trade, error = service.early_terminate_trade(trade_ref, termination_date, current_user.user_id)
     
-    Calculates interest up to termination date and adjusts settlement amounts.
-    """
-    trade = next((t for t in MOCK_REPO_TRADES if t.trade_ref == trade_ref), None)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+        
+    db.commit()
+    db.refresh(trade)
+    return map_trade_to_response(trade)
+
+
+class MarginCallResult(BaseModel):
+    """Margin call calculation result"""
+    trade_ref: str
+    current_margin_pct: Decimal
+    required_margin_pct: Decimal
+    margin_call_triggered: bool
+    margin_call_amount: Decimal
+    margin_call_direction: str
+    calculated_at: datetime
+
+
+@router.post("/{trade_ref}/margin-call", response_model=MarginCallResult)
+async def check_margin_call(
+    trade_ref: str,
+    current_market_price: Decimal = Query(..., description="Current market price of collateral"),
+    db: Session = Depends(get_db),
+    current_user: UserInToken = Depends(get_current_active_user)
+):
+    """Check margin call status."""
+    service = RepoService(db)
+    result = service.check_margin_call(trade_ref, current_market_price)
     
-    if not trade:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trade {trade_ref} not found"
-        )
-    
-    if trade.status not in ["ACTIVE", "NEAR_LEG_SETTLED"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Can only early terminate active trades"
-        )
-    
-    if termination_date >= trade.end_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Termination date must be before original end date"
-        )
-    
-    # Recalculate interest for shorter period
-    new_tenor = (termination_date - trade.start_date).days
-    new_interest = trade.near_leg_amount * trade.repo_rate / 100 * new_tenor / 365
-    new_far_leg = trade.near_leg_amount + new_interest
-    
-    updated = trade.model_copy(update={
-        "status": "EARLY_TERMINATED",
-        "is_early_terminated": True,
-        "early_termination_date": termination_date,
-        "far_leg_amount": round(new_far_leg, 2),
-        "interest_amount": round(new_interest, 2),
-        "tenor_days": new_tenor,
-        "updated_at": datetime.now()
-    })
-    
-    return updated
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+        
+    return result

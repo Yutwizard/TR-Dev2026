@@ -27,7 +27,9 @@ class TradeStatus(str, Enum):
     PARTIALLY_SETTLED = "PARTIALLY_SETTLED"
     SETTLED = "SETTLED"
     ACTIVE = "ACTIVE"           # For interbank/repo: deal is live
+    NEAR_LEG_SETTLED = "NEAR_LEG_SETTLED"  # Repo: near leg done, awaiting far leg
     MATURED = "MATURED"         # For interbank/repo: reached maturity
+    EARLY_TERMINATED = "EARLY_TERMINATED"  # Repo/interbank: terminated before maturity
     CANCELLED = "CANCELLED"
     MARGIN_CALL = "MARGIN_CALL" # Repo: margin event triggered
 

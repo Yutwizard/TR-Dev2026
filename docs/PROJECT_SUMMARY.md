@@ -555,86 +555,49 @@ data/extracted/
 
 ---
 
-## PART 6: Next Steps
+## PART 6: Repo Service Implementation (Feb 10, 2026 - Continued)
 
-### Option 1: Complete Sprint 3 (Repo Service) - RECOMMENDED
-The Interbank service is robust. Next priority is the Repo service, which shares similar architecture.
+### ✅ Sprint 3: Repo Service (Complete)
 
-| Day | Task | Deliverable |
-|-----|------|-------------|
-| 1 | **Repo Service** | Near/Far leg logic, Collateral handling |
-| 2 | **Router Refactor** | Update `routers/repo.py` to use service |
-| 3 | **Collateral Service** | Haircut management, MTM valuation |
-| 4 | **Margin Call** | Margin workflow implementation |
-| 5 | **Integration Test** | End-to-end Repo lifecycle test |
+#### 1. Repo Service (`repo_service.py`)
+- **Lifecycle**: Create -> Approve -> Settle (Near/Far) -> Early Terminate / Cancel.
+- **Calculations**: Integrated `CalculationEngine` for Interest (ACT/365 default) and Far Leg Amount.
+- **Collateral**: Haircut validation and Market Value calculation.
+- **Margin Calls**: Logic to check margin status and trigger calls (`check_margin_call`).
 
-**Files to Create:**
-- `app/services/repo_service.py`
-- `app/services/collateral_service.py`
-- `tests/test_repo_service.py`
+#### 2. Repo Router (`routers/repo.py`)
+- **API Endpoints**: 
+  - `POST /`: Create trade
+  - `GET /`: List trades (with filters)
+  - `POST /{ref}/approve`: Four-eyes approval
+  - `POST /{ref}/settle-near-leg` / `settle-far-leg`: Settlement workflow
+  - `POST /{ref}/early-terminate`: Early termination
+  - `POST /{ref}/margin-call`: Margin status check
 
-### Option 2: Stakeholder Review
-- Validate the new Interbank workflows with FO/MO/BO
-- Demonstrate the new EOD batch script results
-
-
-### Option 3: Frontend Planning
-- Define UI requirements from process workflows
-- Design trade entry screens per team responsibilities
-- Plan dashboard layouts for daily operations
+#### 3. Quality Assurance
+- **Unit Tests**: `tests/test_repo_service.py` (4 tests covering lifecycle).
+- **Interbank Fix**: Fixed `test_interbank_service.py` mocking logic (5 tests passing).
+- **Total Tests Passing**: 9/9.
 
 ---
 
-## 📊 Project Statistics
+## PART 7: Next Steps
 
-| Metric | Value |
-|--------|-------|
-| **API Routes** | 94 |
-| **Database Tables** | 20 |
-| **Service Modules** | 6 |
-| **Documentation** | 10 core documents |
-| **Lines of Documentation** | 6,000+ |
-| **Database Fields Mapped** | 272 (100% coverage) |
-| **Interactive Portal Flows** | 10 categories |
-| **Git Commits** | 19+
-| **Sprints Complete** | 2 |
-| **Git Commits** | 15+ |
+### Option 1: Sprint 4 (Position Management) - RECOMMENDED
+Aggregation of Bond, Interbank, and Repo trades into real-time positions.
+- **Service**: Update `position_service.py` to ingest Repo/Interbank.
+- **Calculations**: WAC (Weighted Average Cost) for Bonds, Cash impact for Money Market.
+- **EOD**: End-of-Day position snapshots.
 
----
+### Option 2: Frontend Development
+- Build UI for Trade Entry (Bond/Repo/Interbank).
+- Integrate with new APIs.
 
-## 🔗 Quick Reference Links
-
-| Resource | URL/Path |
-|----------|----------|
-| API Documentation | http://localhost:8000/docs |
-| Database Admin | http://localhost:8080 |
-| System Design | `docs/01-DESIGN/SYSTEM_DESIGN.md` |
-| Field Reference | `docs/01-DESIGN/FIELD_REFERENCE.md` |
-| Transaction Workflows | `docs/02-PROCESSES/TRANSACTION_WORKFLOWS.md` |
-| Field Workflow Mapping | `docs/02-PROCESSES/FIELD_WORKFLOW_MAPPING.md` |
-| Transaction Flow Diagrams | `docs/02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md` |
-| Interactive Flow Portal | `docs/02-PROCESSES/transaction_flow.html` |
-| Setup Procedures | `docs/02-PROCESSES/PRE_TRANSACTION_SETUP.md` |
-| Development Guide | `docs/03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md` |
-| Daily Operations | `docs/04-OPERATIONS/DAILY_OPERATIONS.md` |
-| Review Checklist | `docs/04-OPERATIONS/STAKEHOLDER_CHECKLIST.md` |
-
----
-
-## 🔄 Pending: Bond Process Review
-
-**Status:** Awaiting user feedback from stakeholder discussions
-
-**Action Items:**
-- [ ] Review bond trading process with Front Office, Middle Office, and Back Office
-- [ ] Identify any missing database tables or fields
-- [ ] Identify any additional processes or workflows needed
-- [ ] Report findings for Sprint 2B implementation (if needed)
-
-> **Note:** Please inform the AI assistant of any additional requirements discovered during stakeholder reviews.
+### Option 3: Stakeholder Review
+- Review implemented logic with business users.
 
 ---
 
 **End of Combined Session Summary**
 
-*Sprints 1-2 Complete | Documentation Restructure Complete | Field Alignment Complete (272 fields) | Interactive Portal Created | Awaiting Bond Process Review | Sprint 3 Pending*
+*Sprints 1-3 (Part 1) Complete | Repo Service Complete | Documentation Restructure Complete | Field Alignment Complete | Interactive Portal Created | Awaiting Bond Process Review*

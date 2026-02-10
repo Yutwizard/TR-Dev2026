@@ -14,7 +14,7 @@ Sprint 2 was focused on Bond Trading which is **100% complete**. However, Interb
 |--------|--------|---------|----------|--------|
 | Bond Trading | ✅ | ✅ | ✅ | **Complete** |
 | Interbank | ✅ | ✅ | ✅ | **Complete** |
-| Repo | ✅ | ⚠️ Mock | ❌ | **Pending** |
+| Repo | ✅ | ✅ | ✅ | **Complete** |
 
 ---
 
@@ -67,7 +67,7 @@ update_limit_utilization(db: Session, deal: InterbankDeal, action: str)
 
 ---
 
-### 2. `app/services/repo_service.py`
+### ✅ COMPLETED: `app/services/repo_service.py`
 
 **Purpose:** Core business logic for repo/reverse repo transactions
 
@@ -109,7 +109,7 @@ get_pending_margin_calls(db: Session) -> List[MarginCall]
 
 ---
 
-### 3. `app/services/collateral_service.py`
+### ⚠️ INTEGRATED: `app/services/collateral_service.py` (Logic in RepoService)
 
 **Purpose:** Collateral allocation, valuation, and margin call management
 
@@ -187,7 +187,7 @@ async def create_interbank_deal(
 
 ---
 
-### 5. Update `app/routers/repo.py`
+### ✅ COMPLETED: Update `app/routers/repo.py`
 
 **Current:** Uses `MOCK_REPO_TRADES` list  
 **Required:** Connect to database via `repo_service.py` and `collateral_service.py`
@@ -288,10 +288,10 @@ async def run_margin_call_process(db: Session, date: date):
 | # | Service/File | Priority | Effort | Dependencies |
 |---|--------------|----------|--------|--------------|
 | 1 | `interbank_service.py` | 🟢 Done | 0 days | None |
-| 2 | `repo_service.py` | 🔴 High | 1-2 days | None |
-| 3 | `collateral_service.py` | 🔴 High | 1-2 days | None |
+| 2 | `repo_service.py` | 🟢 Done | 0 days | None |
+| 3 | `collateral_service.py` | 🟡 Integrated | 0 days | None |
 | 4 | Update `interbank.py` router | 🟢 Done | 0 hrs | #1 |
-| 5 | Update `repo.py` router | 🟡 Medium | 4-6 hrs | #2, #3 |
+| 5 | Update `repo.py` router | 🟢 Done | 0 hrs | #2, #3 |
 | 6 | Daily accrual job | 🟢 Low | 1 day | #1, #2 |
 | 7 | Maturity processing job | 🟢 Low | 1 day | #1, #2 |
 | 8 | Margin call job | 🟢 Low | 1 day | #3 |
@@ -327,5 +327,5 @@ async def run_margin_call_process(db: Session, date: date):
 
 ---
 
-**Last Updated:** February 5, 2026  
+**Last Updated:** February 10, 2026  
 **Next Review:** Before Sprint 3 planning
