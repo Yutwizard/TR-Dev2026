@@ -1,0 +1,30 @@
+graph TD
+    subgraph Frontend Logic
+        UI[User Interface] -->|1. Submit Trade| VAL[Validation Layer]
+        VAL -->|2. Valid Request| API[API Client]
+    end
+
+    subgraph Backend API
+        API -->|3. POST /trades| ROUTER[FastAPI Router]
+        ROUTER -->|4. Check Auth| AUTH[Auth Middleware]
+        AUTH -->|5. Verify Perms| RBAC[RBAC Service]
+    end
+
+    subgraph Business Logic
+        RBAC -->|6. Authorized| SERVICE[Trade Service]
+        SERVICE -->|7. Check Limit(Limit Service)| LIMIT{Limit OK?}
+        LIMIT -- No --> REJECT[Reject Trade]
+        LIMIT -- Yes --> CALC[Calc Engine: Price/Yield]
+        CALC -->|8. Enriched Data| DB_TX[DB Transaction]
+    end
+
+    subgraph Data Persistence
+        DB_TX -->|9. Insert Trade| TABLE_A[(Trades Table)]
+        DB_TX -->|10. Update utilization| TABLE_B[(Limits Table)]
+        DB_TX -->|11. Create Audit| TABLE_C[(Audit Log)]
+    end
+
+    subgraph Post-Process
+        DB_TX -->|12. Commit Success| EVENT[Event Bus / Queue]
+        EVENT -->|13. Async| POSITION[Position Service: Update]
+    end

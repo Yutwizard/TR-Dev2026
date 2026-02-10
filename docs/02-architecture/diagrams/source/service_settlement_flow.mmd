@@ -1,0 +1,8 @@
+graph TD
+    A[Daily Batch / Manual Trigger] --> B{Trade Status == APPROVED?}
+    B -- Yes --> C{Settlement Date == Today?}
+    C -- Yes --> D[Initiate BAHTNET/TSD Flow]
+    D --> E[Update BondPosition (Security balance)]
+    D --> F[Update CashPosition (Cash balance)]
+    F --> G[Mark Trade as SETTLED]
+    G --> H[Generate Settlement Confirmation]

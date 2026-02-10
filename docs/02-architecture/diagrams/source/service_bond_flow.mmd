@@ -1,0 +1,8 @@
+graph TD
+    A[API Request] --> B[Validate Security Existence]
+    B --> C[Check Face Value > 0]
+    C --> D[Calculation Engine: calc_clean_price]
+    D --> E[Check Counterparty Limits]
+    E --> F[Generate Trade Reference]
+    F --> G[Save to DB: DRAFT/PENDING_APPROVAL]
+    G --> H[Create Audit Log]

@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant S as RepoService
+    participant C as CalcEngine
+    participant P as PositionService
+    participant L as LimitService
+
+    S->>L: Check Repo Limit
+    S->>C: Calculate Near/Far Leg Amounts
+    S->>S: Validate Collateral Availability
+    S->>P: Block Securities as Collateral
+    S->>S: Store RepoTrade (APPROVED)
+    Note over S,P: Awaiting Near-Leg Settlement

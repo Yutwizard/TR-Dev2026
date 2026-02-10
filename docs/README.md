@@ -12,6 +12,10 @@ Welcome to the comprehensive documentation for the Treasury Management System (T
 
 ### 02 - Architecture
 **System design and technical architecture**
+- [Architecture Canvas](./02-architecture/design/ARCHITECTURE_CANVAS.md) - **High-Level Visual Map**
+  - C4 System Context
+  - Container Architecture
+  - Deployment Topology
 - [Technical Details](./02-architecture/technical-details/) - Detailed module-by-module architecture
   - Core Module (Enums, State Machines, Security)
   - Models & Database Schema

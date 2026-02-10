@@ -1,0 +1,13 @@
+erDiagram
+    ENTITY-MASTER ||--o{ USER : "has"
+    ENTITY-MASTER ||--o{ COUNTERPARTY-MASTER : "contains"
+    ENTITY-MASTER ||--o{ PORTFOLIO-MASTER : "owns"
+    
+    SECURITY-MASTER ||--o{ THAIBMA-MARKET-DATA : "priced by"
+    SECURITY-MASTER ||--o{ BOND-TRADE : "traded in"
+    
+    BOND-TRADE }o--|| COUNTERPARTY-MASTER : "engaged with"
+    BOND-TRADE }o--|| PORTFOLIO-MASTER : "booked in"
+    
+    REPO-TRADE }o--|| SECURITY-MASTER : "collateral"
+    REPO-TRADE }o--|| COUNTERPARTY-MASTER : "counterparty"

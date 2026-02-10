@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant UI as Frontend
+    participant R as Bond Router
+    participant P as Permission Check
+    participant S as Bond Service
+    participant DB as Database
+
+    UI->>R: PATCH /api/v1/bond-trades/{id}/approve
+    R->>P: require_permission(APPROVE_TRADE)
+    P-->>R: Authorized (Role: SUPERVISOR)
+    R->>S: approve_trade(trade_id, user_id)
+    S->>S: validate_four_eyes(creator_id, current_user_id)
+    alt Same User
+        S-->>R: AuthorizationError (403)
+        R-->>UI: "Cannot approve own trade"
+    else Different User
+        S->>DB: Update Status -> APPROVED
+        S->>DB: Create Audit Log Entry
+        S-->>R: Success
+        R-->>UI: 200 OK (Trade Approved)
+    end
