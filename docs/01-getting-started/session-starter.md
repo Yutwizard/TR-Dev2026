@@ -2,7 +2,7 @@
 
 **For:** AI Assistant (Kimi Code CLI)  
 **Purpose:** Quick context recovery after restart  
-**Last Updated:** February 10, 2026
+**Last Updated:** February 10, 2026 (End of Day)
 
 ---
 
@@ -10,136 +10,89 @@
 
 Read in this exact order:
 
-1. **[README.md](./README.md)** - Entry point, document navigation
-2. **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - Complete work summary (Feb 2-5)
-3. **[docs/01-DESIGN/SYSTEM_DESIGN.md](./01-DESIGN/SYSTEM_DESIGN.md)** - Architecture & database design
-4. **[docs/02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md](./02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md)** - Visual process flows
+1. **[README.md](../README.md)** - Main documentation hub
+2. **[docs/STRUCTURE.md](../STRUCTURE.md)** - Understanding the new doc organization
+3. **[docs/01-getting-started/project-summary.md](./project-summary.md)** - Complete system overview
+4. **[docs/03-development/guides/FUTURE_ENHANCEMENTS.md](../03-development/guides/FUTURE_ENHANCEMENTS.md)** - Current roadmap
 
 ---
 
 ## 📋 Quick Context
 
-### What Was Completed (Feb 2-10, 2026)
+### What Was Completed (Feb 10, 2026)
 
-| Date | Work |
-|------|------|
-| **Feb 2** | Sprint 1-2: Backend implementation (94 APIs, 18 tables, 6 services) |
-| **Feb 3** | Design documentation (5 docs created) |
-| **Feb 5** | Documentation restructure + Field alignment + Interactive portal (11 flows) + Market Data tables |
-| **Feb 6** | API Reference + Testing Guide + Document alignment |
-| **Feb 10** | **Phase 0 Audit/Enum** + **Sprint 3 (Interbank & Repo)**: Full core implementation |
+| Work | Outcome |
+|------|---------|
+| **Core Documentation** | Complete architecture & flow diagrams created (MermaidJS) |
+| **Doc Reorganization** | Restructured `docs/` into 5 logical sections (01-05) |
+| **Backlog Cleanup** | Archived outdated `MISSING_SERVICES` backlog |
+| **Visual Library** | Created `docs/02-architecture/diagrams/` with 7 source diagrams |
+| **System Canvas** | Created `ARCHITECTURE_CANVAS.md` (C4 + Deployment) |
 
 ### Current Status
-- ✅ Sprint 1: Complete (Foundation - Master Data)
-- ✅ Sprint 2: Bond Trading Complete
-- ✅ **Phase 0 Architecture**: Complete
-- ✅ **Sprint 3 (Interbank)**: Complete (Service, Router, Tests)
-- ✅ **Sprint 3 (Repo)**: Complete (Service, Router, Tests, Margin)
+- ✅ **Phase 0-3 (Core Backend)**: Complete (Bond, Interbank, Repo, Settlement)
+- ✅ **Documentation**: 100% Up-to-date and restructured
+- ✅ **Tests**: 20/20 passing for critical paths
 - ⏳ **Sprint 4 (Positions)**: Next Priority
-- ⏳ **Bond Process Review**: In Progress - Awaiting stakeholder feedback
-
-> ⚠️ **Important:** 
-> - Interbank & Repo Services are fully functional with **20/20 tests passing** (15 repo + 5 interbank).
-> - Enum & State Machine bugs found and fixed during review.
-> - Next critical task is **Position Management** (aggregating trades).
-
-### Pending User Action
-```
-User chooses between Position Management (Backend) or Frontend Development.
-```
 
 ### Current Git Branch
 ```
 main
-Latest: Feb 10 Repo Service + 20/20 Tests + Enum/State Machine Fixes
+Latest: Docs reorganization + Architecture visuals (Feb 10)
 ```
 
 ---
 
-## 📁 Document Structure (Read If Needed)
+## 📁 Document Structure (New Layout)
 
 ```
 docs/
-├── README.md                          ← Start here
-├── PROJECT_SUMMARY.md                 ← Work summary (Updated Feb 10)
-├── SESSION_STARTER.md                 ← This file
-│
-├── 01-DESIGN/                         ← Design docs
-│   ├── SYSTEM_DESIGN.md               ← Architecture, database, teams
-│   └── FIELD_REFERENCE.md             ← Field definitions
-│
-├── 02-PROCESSES/                      ← Business processes
-│   ├── TRANSACTION_WORKFLOWS.md       ← Text workflows (272+ fields mapped)
-│   ├── FIELD_WORKFLOW_MAPPING.md      ← Field-to-workflow mapping
-│   ├── PRE_TRANSACTION_SETUP.md       ← Onboarding/setup
-│   ├── TRANSACTION_FLOW_DIAGRAMS.md   ← Visual diagrams
-│   └── transaction_flow.html          ← Interactive portal (11 flows)
-│
-├── 03-IMPLEMENTATION/                 ← Developer docs
-│   ├── DEVELOPMENT_GUIDE.md           ← 10-week plan
-│   ├── SETUP_INSTRUCTIONS.md          ← Local setup
-│   ├── API_REFERENCE.md               ← All 54 endpoints
-│   ├── TESTING_GUIDE.md               ← Unit/Integration/E2E testing
-│   └── MISSING_SERVICES_BACKLOG.md    ← Incomplete services tracker
-│
-├── 04-OPERATIONS/                     ← Operations docs
-│   ├── DAILY_OPERATIONS.md            ← Daily batch procedures
-│   ├── STAKEHOLDER_CHECKLIST.md       ← Review checklist
-│   └── MANUAL_CALCULATION_GUIDE.md    ← Calculation troubleshooting
-│
-└── archive/                           ← Old documents
+├── 01-getting-started/        (Setup & Summaries)
+├── 02-architecture/           (Design & Visuals)
+├── 03-development/            (Guides & API Refs)
+├── 04-business-processes/     (Workflows & Rules)
+└── 05-operations/             (Daily Procedures)
 ```
 
 ---
 
-## 🎯 What To Do Next
+## 🎯 What To Do Next (Tomorrow)
 
-### Option 1: Sprint 4 (Position Management) - HIGH PRIORITY
-```
-Aggregation of Bond, Interbank, and Repo trades into real-time positions.
+### 🔴 Option 1: Sprint 4 (Position Management) - RECOMMENDED
+**Goal**: Aggregate Bond, Interbank, and Repo trades into real-time positions.
 
-Files to update:
-- src/backend/app/services/position_service.py
-- tests/test_position_service.py
+1.  **Review**: `src/backend/app/services/position_service.py` (current state)
+2.  **Plan**: Design aggregation logic for multi-product positions
+3.  **Test**: Create `tests/test_position_service.py`
+4.  **Implement**: Enhancements to handle all 3 trade types
 
-Estimate: 2-3 days
-```
+**Estimate**: 2-3 days
 
-### Option 2: Frontend Implementation
-```
-- Create UI for Trade Capture (Bond, Repo, Interbank)
-- Connect to 94+ API endpoints
-```
+### 🟡 Option 2: Frontend Implementation
+**Goal**: Build UI for Trade Capture.
 
-### Option 3: Stakeholder Review
-```
-1. Present TRANSACTION_FLOW_DIAGRAMS.md to teams
-2. Walk through SYSTEM_DESIGN.md
-3. Validate DAILY_OPERATIONS.md with Back Office
-```
+1.  **Review**: `src/frontend/` structure
+2.  **Connect**: Wire up `api/v1/bond-trades` to a Next.js form
+3.  **Style**: Apply Tailwind CSS components
 
-### 📋 Backlog (Future Improvements)
-```
-1. Standalone collateral_service.py (currently embedded in RepoService)
-2. Market Data Integration for real-time collateral pricing (currently Par)
-3. repo_subtype input in RepoTradeCreate (currently hardcoded BILATERAL)
-4. datetime.utcnow() → datetime.now(datetime.UTC) migration
-5. Pydantic V2 ConfigDict migration
-```
+### 🟢 Option 3: Tech Debt / Polish
+**Goal**: Improve code quality.
+
+1.  **Testing**: Increase coverage for `position_service.py`
+2.  **Refactor**: `datetime.utcnow()` to `datetime.now(datetime.UTC)`
+3.  **Schema**: Add `repo_subtype` to Repo schema
 
 ---
 
-## 🔑 Key Decisions (Don't Change Without Approval)
+## 🔑 Key Decisions & Architecture
 
 | Decision | Value |
 |----------|-------|
-| **Architecture** | Modular Monolith (FastAPI + PostgreSQL + React) |
-| **Limit Types** | PLACEMENT_LIMIT, REPO_LIMIT, SINGLE_TXN, TENOR, CONCENTRATION |
-| **No AGGREGATE limit** | Product-specific limits only |
-| **Security Master Owner** | Back Office (not IT Admin) |
-| **ThaiBMA Import** | 17:00 (normal), 17:30-18:00 (month-end) via API |
-| **Four-Eyes Approval** | ALL transactions (no threshold) |
-| **Naming Convention** | snake_case throughout |
+| **Architecture** | Modular Monolith (FastAPI + PostgreSQL + Next.js) |
+| **Visuals** | MermaidJS (Source in `docs/02-architecture/diagrams/`) |
+| **Database** | PostgreSQL 15 (18 tables + 2 market data) |
+| **Authentication** | JWT + RBAC (Strict) |
+| **Batch Jobs** | EOD script at `scripts/run_eod_batch.py` |
 
 ---
 
@@ -148,166 +101,31 @@ Estimate: 2-3 days
 | Metric | Value |
 |--------|-------|
 | API Routes | 94 |
-| **Database Tables** | **20** (18 + 2 ThaiBMA market data) |
+| Database Tables | 20 |
 | Service Modules | 6 |
-| Documentation | 10 core documents |
-| Git Commits | 20+ |
-| Sprints Complete | 2 of 6 |
-| **Pending Review** | Bond process with stakeholders |
-
----
-
-## 🔗 Critical External References
-
-| Reference | Location |
-|-----------|----------|
-| Source Excel | `data/source/Treasury_System_Database_V2_Internal.xlsx` |
-| Extracted Tables | `data/extracted/table_structures.md` |
-| Backend Code | `src/backend/` |
-| Interactive Portal | `docs/02-PROCESSES/transaction_flow.html` |
-
----
-
-## ⚠️ Pending Items (If Any)
-
-| Item | Status | Notes |
-|------|--------|-------|
-| Sprint 3 Implementation | ⏳ Pending | Interbank + Repo |
-| Stakeholder Sign-off | ⏳ Pending | SYSTEM_DESIGN.md |
-| ThaiBMA API Integration | ⏳ Pending | For production |
-| BAHTNET Automation | ⏳ Deferred | Manual for MVP |
+| Documentation | **5 Sections (Complete)** |
+| Critical Tests | 20/20 passing |
 
 ---
 
 ## 💡 Quick Commands
 
 ```bash
-# Start development environment
+# Start Backend
 cd src/backend
 docker-compose -f docker-compose.local.yml up -d
 .\venv\Scripts\Activate.ps1
-.\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --reload
 
-# Access API docs
-http://localhost:8000/docs
+# Start Frontend
+cd src/frontend
+npm run dev
+
+# Run Tests
+pytest
 ```
 
 ---
 
-## 🔄 Recent Changes (Feb 6)
-
-### New Documents
-- **API_REFERENCE.md** - Complete endpoint documentation (54 endpoints)
-- **TESTING_GUIDE.md** - Testing strategy and examples
-
-### Updated
-- **SESSION_STARTER.md** - This file updated with latest status
-- **All docs aligned** - Table counts, Market Data references consistent
-
-### Archived
-- Duplicate architecture docs moved to `docs/archive/`
-
----
-
-## 📝 If Creating New Documents
-
-**Naming Convention:**
-- Use `snake_case.md`
-- Place in appropriate folder (01-DESIGN, 02-PROCESSES, etc.)
-- Update README.md with new link
-
-**Template:**
-```markdown
-# Title
-
-**Date:** YYYY-MM-DD
-**Purpose:** One sentence
-
----
-
-## Content
-...
-
----
-
-**Document End**
-```
-
-
----
-
-## 📋 Task List for Tomorrow (Feb 11, 2026)
-
-### 🔴 Start Here: Documentation Fixes (30 min)
-
-```
-[ ] Task #2: Fix PART 5 file structure in PROJECT_SUMMARY.md (lines 462-495)
-[ ] Task #3: Update stats table service count in PROJECT_SUMMARY.md (line 152)
-[ ] Task #4: Fix Pending Items table in SESSION_STARTER.md (lines 172-178)
-[ ] Task #5: Update Recent Changes section in SESSION_STARTER.md (lines 197-209)
-[ ] Task #6: Delete or merge docs/04-IMPLEMENTATION/ folder
-```
-
-### 🟡 Then: Development Options
-
-**Option A: Sprint 4 - Position Management (RECOMMENDED)**
-```bash
-# Aggregate Bond, Interbank, Repo trades into real-time positions
-Files to update:
-- src/backend/app/services/position_service.py (already exists, needs enhancement)
-- tests/test_position_service.py (create new)
-
-Estimate: 2-3 days
-```
-
-**Option B: Frontend Development**
-```bash
-# Investigate src/frontend/ scope first (Task #11)
-# Then build UI for Trade Capture
-```
-
-**Option C: Documentation Enhancement**
-```bash
-# Tasks #8-10: Document missing services, tests, verify API count
-Estimate: 4 hours
-```
-
-### 🟢 Backlog: Tech Debt (When Time Permits)
-
-```
-- Replace datetime.utcnow() → datetime.now(datetime.UTC)
-- Migrate Pydantic V2 ConfigDict
-- Extract collateral_service.py from RepoService
-- Integrate Market Data for repo collateral pricing
-- Add repo_subtype input to schema
-```
-
-### 📊 Current Status Snapshot
-
-| Component | Status | Tests |
-|-----------|--------|-------|
-| Sprint 1 (Foundation) | ✅ Complete | N/A |
-| Sprint 2 (Bond Trading) | ✅ Complete | N/A |
-| Sprint 3 (Interbank) | ✅ Complete | 5/5 ✅ |
-| Sprint 3 (Repo) | ✅ Complete | 15/15 ✅ |
-| Sprint 4 (Positions) | ⏳ Partial | Needs tests |
-| Documentation | ⚠️ 95% | 5 fixes pending |
-
-**Total Tests:** 20/20 passing ✅
-
----
-
-## ❓ If Unsure What To Do
-
-1. Read PROJECT_SUMMARY.md fully (especially new PART 8: Task List)
-2. Check latest git log: `git log --oneline -5`
-3. Start with documentation fixes (Tasks #2-6) — quick wins!
-4. Then choose Sprint 4 (Position Management) for development work
-
----
-
-**END OF SESSION STARTER**
-
-*Last Updated: February 10, 2026 13:47 ICT*
-
-*Read the 4 files listed at the top, then proceed based on user's direction*
+**End of Session Starter**  
+*Ready for handoff.*
