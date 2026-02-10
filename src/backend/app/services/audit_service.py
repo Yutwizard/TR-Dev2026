@@ -100,7 +100,7 @@ class AuditService:
         user_id: str,
         new_values: Optional[Dict[str, Any]] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log entity creation."""
         return self._log(
             entity_type=entity_type,
@@ -120,7 +120,7 @@ class AuditService:
         new_status: str,
         notes: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a status transition."""
         return self._log(
             entity_type=entity_type,
@@ -140,7 +140,7 @@ class AuditService:
         approver_id: str,
         notes: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log an approval action."""
         return self._log(
             entity_type=entity_type,
@@ -159,7 +159,7 @@ class AuditService:
         rejector_id: str,
         reason: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a rejection action."""
         return self._log(
             entity_type=entity_type,
@@ -177,7 +177,7 @@ class AuditService:
         user_id: str,
         reason: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a cancellation action."""
         return self._log(
             entity_type=entity_type,
@@ -195,7 +195,7 @@ class AuditService:
         user_id: str,
         settlement_ref: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a settlement action."""
         return self._log(
             entity_type=entity_type,
@@ -213,7 +213,7 @@ class AuditService:
         user_id: str,
         limit_details: Dict[str, Any],
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a limit check result."""
         return self._log(
             entity_type=entity_type,
@@ -230,7 +230,7 @@ class AuditService:
         user_id: str,
         thaibma_ref: Optional[str] = None,
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log ThaiBMA trade reporting."""
         return self._log(
             entity_type=EntityType.BOND_TRADE,
@@ -247,7 +247,7 @@ class AuditService:
         user_id: str,
         margin_details: Dict[str, Any],
         **kwargs
-    ) -> AuditLog:
+    ) -> TransactionAuditLog:
         """Log a margin call event."""
         return self._log(
             entity_type=EntityType.REPO_TRADE,

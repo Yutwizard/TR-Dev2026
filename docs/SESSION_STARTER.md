@@ -2,7 +2,7 @@
 
 **For:** AI Assistant (Kimi Code CLI)  
 **Purpose:** Quick context recovery after restart  
-**Last Updated:** February 6, 2026
+**Last Updated:** February 10, 2026
 
 ---
 
@@ -27,36 +27,30 @@ Read in this exact order:
 | **Feb 3** | Design documentation (5 docs created) |
 | **Feb 5** | Documentation restructure + Field alignment + Interactive portal (11 flows) + Market Data tables |
 | **Feb 6** | API Reference + Testing Guide + Document alignment |
+| **Feb 10** | **Phase 0 Architecture** (Enums, Audit, State Machine) + **Sprint 3 Interbank** (Service, Router, Batch, Tests) |
 
 ### Current Status
 - ✅ Sprint 1: Complete (Foundation - Master Data)
-- ✅ Sprint 2: Bond Trading Complete | Interbank & Repo: API Stubs Only
-- ✅ Documentation: Complete (Restructured)
-- ⏳ **Bond Process Review: In Progress** - Awaiting stakeholder feedback
-- ⏳ Sprint 3: Pending (Interbank + Repo Services)
-- ⏳ Stakeholder Review: Pending
+- ✅ Sprint 2: Bond Trading Complete
+- ✅ **Phase 0 Architecture**: Complete
+- ✅ **Sprint 3 (Interbank)**: Core Implemented (Service, Router, Batch, Tests)
+- ⏳ **Sprint 3 (Repo)**: Pending Implementation
+- ⏳ **Bond Process Review**: In Progress - Awaiting stakeholder feedback
 
 > ⚠️ **Important:** 
-> - Interbank and Repo have working API endpoints but use MOCK data. See MISSING_SERVICES_BACKLOG.md for details.
-> - **Bond process under review** - Additional tables/processes may be identified
+> - Interbank Service is fully functional (no longer a stub).
+> - Repo Service is the next critical implementation task.
 
 ### Pending User Action
 ```
-User is reviewing bond trading process with all related parties:
-- Front Office (Trading)
-- Middle Office (Risk)
-- Back Office (Settlement)
-
-Will report back any additional:
-- Database tables needed
-- Process steps missing
-- Workflow changes required
+User checks Repo Service requirements (see MISSING_SERVICES_BACKLOG.md) before starting implementation.
+Or continues Bond Process Review.
 ```
 
 ### Current Git Branch
 ```
 main
-Latest: 4a80936 docs: Add API Reference and Testing Guide, clean up duplicate architecture docs
+Latest: Feb 10 Implement Interbank Service & Phase 0 Architecture
 ```
 
 ---
@@ -66,7 +60,7 @@ Latest: 4a80936 docs: Add API Reference and Testing Guide, clean up duplicate ar
 ```
 docs/
 ├── README.md                          ← Start here
-├── PROJECT_SUMMARY.md                 ← Work summary
+├── PROJECT_SUMMARY.md                 ← Work summary (Updated Feb 10)
 ├── SESSION_STARTER.md                 ← This file
 │
 ├── 01-DESIGN/                         ← Design docs
@@ -83,14 +77,14 @@ docs/
 ├── 03-IMPLEMENTATION/                 ← Developer docs
 │   ├── DEVELOPMENT_GUIDE.md           ← 10-week plan
 │   ├── SETUP_INSTRUCTIONS.md          ← Local setup
-│   ├── API_REFERENCE.md               ← All 54 endpoints ← NEW
-│   ├── TESTING_GUIDE.md               ← Unit/Integration/E2E testing ← NEW
-│   └── MISSING_SERVICES_BACKLOG.md    ← Incomplete services tracker ← READ THIS
+│   ├── API_REFERENCE.md               ← All 54 endpoints
+│   ├── TESTING_GUIDE.md               ← Unit/Integration/E2E testing
+│   └── MISSING_SERVICES_BACKLOG.md    ← Incomplete services tracker
 │
 ├── 04-OPERATIONS/                     ← Operations docs
 │   ├── DAILY_OPERATIONS.md            ← Daily batch procedures
 │   ├── STAKEHOLDER_CHECKLIST.md       ← Review checklist
-│   └── MANUAL_CALCULATION_GUIDE.md    ← Calculation troubleshooting ← NEW
+│   └── MANUAL_CALCULATION_GUIDE.md    ← Calculation troubleshooting
 │
 └── archive/                           ← Old documents
 ```
@@ -99,37 +93,30 @@ docs/
 
 ## 🎯 What To Do Next
 
-### Option 1: Bond Process Review (Current)
+### Option 1: Complete Sprint 3 (Repo Service) - HIGH PRIORITY
+```
+Develop the Repo Service mirroring the Interbank architecture.
+
+Files to create:
+- src/backend/app/services/repo_service.py       ← MAIN TASK
+- src/backend/app/services/collateral_service.py ← MAIN TASK
+- Update: app/routers/repo.py                    ← Connect to service
+- tests/test_repo_service.py                     ← Unit tests
+
+Estimated: 3-5 days
+```
+
+### Option 2: Bond Process Review (Continue)
 ```
 User is conducting detailed review of bond process with all teams.
-
-Awaiting feedback on:
-- Missing database tables
-- Additional process steps
-- Workflow changes needed
-
-Next: Report findings to AI assistant for implementation
+Wait for feedback before making changes.
 ```
 
-### Option 2: Stakeholder Review (Formal)
+### Option 3: Stakeholder Review (Formal)
 ```
 1. Present TRANSACTION_FLOW_DIAGRAMS.md to teams
 2. Walk through SYSTEM_DESIGN.md
 3. Validate DAILY_OPERATIONS.md with Back Office
-4. Get sign-offs on STAKEHOLDER_CHECKLIST.md
-```
-
-### Option 2: Continue Sprint 3 (Interbank + Repo Services)
-```
-Files to create (see MISSING_SERVICES_BACKLOG.md for full specs):
-- src/backend/app/services/interbank_service.py    ← NEW
-- src/backend/app/services/repo_service.py         ← NEW  
-- src/backend/app/services/collateral_service.py   ← NEW
-- Update: app/routers/interbank.py                 ← Connect to real DB
-- Update: app/routers/repo.py                      ← Connect to real DB
-
-Estimated: 6-9 days (1.5-2 weeks)
-Timeline: Week 3-4 of 10-week plan (see DEVELOPMENT_GUIDE.md)
 ```
 
 ### Option 3: Frontend Development

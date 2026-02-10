@@ -1,23 +1,57 @@
 import pytest
-import sys
-import os
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
-
-# Add src/backend to python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/backend')))
 
 from app.services.interbank_service import InterbankService
 from app.models.transactions import InterbankDeal
 from app.core.enums import TradeStatus, InterbankDealType
 
+from app.models.master_data import CounterpartyMaster
+from app.models.limits import LimitDefinition
+from app.models.transactions import InterbankDeal
+from sqlalchemy import func
+
 @pytest.fixture
 def mock_db():
     mock_session = MagicMock()
-    # Mock query().filter() pattern
-    mock_session.query.return_value.filter.return_value.first.return_value = None
-    mock_session.query.return_value.filter.return_value.scalar.return_value = 0
+    
+    # Create a query mock that can differentiate based on model
+    def query_side_effect(*args):
+        mock_query = MagicMock()
+        model = args[0] if args else None
+        
+        # DEBUG
+        # print(f"DEBUG: Querying model: {model} (Type: {type(model)})")
+
+        if model == CounterpartyMaster or "CounterpartyMaster" in str(model):
+            # Return a valid counterparty
+            mock_cp = MagicMock()
+            mock_cp.counterparty_id = "CP_KBANK"
+            mock_cp.is_active = True
+            mock_query.filter.return_value.first.return_value = mock_cp
+            return mock_query
+            
+        elif model == LimitDefinition:
+            # Return no limit (None) -> Success
+            mock_query.filter.return_value.first.return_value = None
+            return mock_query
+            
+        # Handle func.count and func.sum which are harder to match by equality
+        model_str = str(model)
+        if "count" in model_str:
+             mock_query.filter.return_value.scalar.return_value = 0
+             return mock_query
+        elif "sum" in model_str:
+             mock_query.filter.return_value.scalar.return_value = Decimal("0")
+             return mock_query
+        
+        # Default behavior
+        mock_query.filter.return_value.first.return_value = None
+        mock_query.filter.return_value.scalar.return_value = 0
+        return mock_query
+
+    mock_session.query.side_effect = query_side_effect
     return mock_session
 
 @pytest.fixture
@@ -70,7 +104,20 @@ def test_approve_deal_success(service, mock_db):
         status=TradeStatus.PENDING_APPROVAL,
         trader_id="TRADER01"
     )
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_deal
+    
+    # Configure mock query for InterbankDeal
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = mock_deal
+    
+    # Keep original side effect logic but override for InterbankDeal
+    original_side_effect = mock_db.query.side_effect
+    
+    def side_effect(*args):
+        if args and args[0] == InterbankDeal:
+            return mock_query
+        return original_side_effect(*args)
+        
+    mock_db.query.side_effect = side_effect
 
     result, error = service.approve_deal("IB-TEST-001", "APPROVER01")
 
@@ -86,7 +133,18 @@ def test_approve_deal_four_eyes_fail(service, mock_db):
         status=TradeStatus.PENDING_APPROVAL,
         trader_id="TRADER01"
     )
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_deal
+    
+    mock_query = MagicMock()
+    mock_query.filter.return_value.first.return_value = mock_deal
+    
+    original_side_effect = mock_db.query.side_effect
+    
+    def side_effect(*args):
+        if args and args[0] == InterbankDeal:
+            return mock_query
+        return original_side_effect(*args)
+        
+    mock_db.query.side_effect = side_effect
 
     result, error = service.approve_deal("IB-TEST-001", "TRADER01")  # Same ID
 
@@ -95,6 +153,10 @@ def test_approve_deal_four_eyes_fail(service, mock_db):
 
 def test_batch_accrual_update(service, mock_db):
     """Test daily accrual calculation batch"""
+    # Mock calculation engine to isolate service logic
+    service.calc = MagicMock()
+    service.calc.calculate_daily_accrual.return_value = Decimal("100.00")
+
     # Setup mock active deals
     mock_deal1 = MagicMock(spec=InterbankDeal)
     mock_deal1.status = TradeStatus.ACTIVE
@@ -105,11 +167,24 @@ def test_batch_accrual_update(service, mock_db):
     mock_deal1.maturity_date = date.today() + timedelta(days=2)
     mock_deal1.accrued_interest = Decimal("0")
 
-    mock_db.query.return_value.filter.return_value.all.return_value = [mock_deal1]
+    mock_query = MagicMock()
+    mock_query.filter.return_value.all.return_value = [mock_deal1]
+    
+    original_side_effect = mock_db.query.side_effect
+    
+    def side_effect(*args):
+        if args and args[0] == InterbankDeal:
+            return mock_query
+        return original_side_effect(*args)
+        
+    mock_db.query.side_effect = side_effect
 
     count = service.update_daily_accrual(date.today())
 
     assert count == 1
-    # Check if accrued_interest was updated (mock object property set)
-    # 100M * 2% * 5/365 = ~27397.26
-    assert mock_deal1.accrued_interest > 0
+    # Check if calculation was called
+    service.calc.calculate_daily_accrual.assert_called_once()
+    
+    # Check if accrued_interest was updated 
+    # Daily 100 * 5 days = 500
+    assert mock_deal1.accrued_interest == Decimal("500.00")

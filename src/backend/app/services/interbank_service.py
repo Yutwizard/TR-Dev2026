@@ -25,7 +25,8 @@ from app.models.master_data import CounterpartyMaster
 from app.models.limits import LimitDefinition, LimitUtilization
 from app.core.enums import (
     TradeStatus, TradeSide, InterbankDealType, 
-    DayCountConvention, EntityType, AuditAction
+    DayCountConvention, EntityType, AuditAction,
+    LimitType
 )
 from app.core.state_machine import (
     assert_transition, INTERBANK_DEAL_TRANSITIONS, validate_transition
@@ -63,16 +64,17 @@ class InterbankService:
         seq = count + 1
         return f"{prefix}{date_str}-{seq:03d}"
 
+
     def _check_counterparty_limit(self, counterparty_id: str, amount: Decimal) -> Dict[str, Any]:
         """
         Check if the new deal amount breaches the counterparty limit.
         Only considers ACTIVE and PENDING_APPROVAL placements.
         """
-        # 1. Find the limit definition (assume type 'COUNTERPARTY')
+        # 1. Find the limit definition (assume type 'PLACEMENT_LIMIT')
         # In a real system, we might have multiple limit types.
         limit_def = self.db.query(LimitDefinition).filter(
             LimitDefinition.counterparty_id == counterparty_id,
-            LimitDefinition.limit_type == "COUNTERPARTY",
+            LimitDefinition.limit_type == LimitType.PLACEMENT_LIMIT,
             LimitDefinition.status == "APPROVED",
             LimitDefinition.effective_date <= date.today(),
             (LimitDefinition.expiry_date == None) | (LimitDefinition.expiry_date >= date.today())

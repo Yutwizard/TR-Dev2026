@@ -13,14 +13,14 @@ Sprint 2 was focused on Bond Trading which is **100% complete**. However, Interb
 | Module | Models | Routers | Services | Status |
 |--------|--------|---------|----------|--------|
 | Bond Trading | ✅ | ✅ | ✅ | **Complete** |
-| Interbank | ✅ | ⚠️ Mock | ❌ | **Pending** |
+| Interbank | ✅ | ✅ | ✅ | **Complete** |
 | Repo | ✅ | ⚠️ Mock | ❌ | **Pending** |
 
 ---
 
 ## 🔴 High Priority: Missing Service Files
 
-### 1. `app/services/interbank_service.py`
+### ✅ COMPLETED: `app/services/interbank_service.py`
 
 **Purpose:** Core business logic for interbank lending/borrowing deals
 
@@ -154,7 +154,7 @@ get_margin_call_history(db: Session, from_date: date, to_date: date) -> List[Mar
 
 ## 🟡 Medium Priority: Router Updates
 
-### 4. Update `app/routers/interbank.py`
+### ✅ COMPLETED: Update `app/routers/interbank.py`
 
 **Current:** Uses `MOCK_INTERBANK_DEALS` list  
 **Required:** Connect to database via `interbank_service.py`
@@ -287,10 +287,10 @@ async def run_margin_call_process(db: Session, date: date):
 
 | # | Service/File | Priority | Effort | Dependencies |
 |---|--------------|----------|--------|--------------|
-| 1 | `interbank_service.py` | 🔴 High | 1-2 days | None |
+| 1 | `interbank_service.py` | 🟢 Done | 0 days | None |
 | 2 | `repo_service.py` | 🔴 High | 1-2 days | None |
 | 3 | `collateral_service.py` | 🔴 High | 1-2 days | None |
-| 4 | Update `interbank.py` router | 🟡 Medium | 4-6 hrs | #1 |
+| 4 | Update `interbank.py` router | 🟢 Done | 0 hrs | #1 |
 | 5 | Update `repo.py` router | 🟡 Medium | 4-6 hrs | #2, #3 |
 | 6 | Daily accrual job | 🟢 Low | 1 day | #1, #2 |
 | 7 | Maturity processing job | 🟢 Low | 1 day | #1, #2 |
