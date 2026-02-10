@@ -178,7 +178,9 @@ out/
 .DS_Store
 .AppleDouble
 .LSOverride
-Icon
+Icon
+
+
 ._*
 .DocumentRevisions-V100
 .fseventsd
@@ -273,6 +275,8 @@ temp/
 # Local development files
 local/
 local.settings.json
+/*.csv
+/docker-compose.local.yml
 
 # ============================================================================
 # KEEP THESE FILES

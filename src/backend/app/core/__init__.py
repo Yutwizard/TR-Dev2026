@@ -5,6 +5,8 @@ Core utilities for Treasury Management System
 - Security (password hashing)
 - Permissions (RBAC)
 - Exceptions
+- Enums (single source of truth)
+- State Machine (deal lifecycle)
 """
 
 from app.core.auth import (
@@ -29,6 +31,25 @@ from app.core.exceptions import (
     ValidationError,
     NotFoundError,
 )
+from app.core.enums import (
+    TradeStatus,
+    TradeSide,
+    InterbankDealType,
+    RepoTradeType,
+    RateType,
+    DayCountConvention,
+    SettlementStatus,
+    AuditAction,
+    EntityType,
+)
+from app.core.state_machine import (
+    validate_transition,
+    get_allowed_transitions,
+    assert_transition,
+    BOND_TRADE_TRANSITIONS,
+    INTERBANK_DEAL_TRANSITIONS,
+    REPO_TRADE_TRANSITIONS,
+)
 
 __all__ = [
     # Auth
@@ -49,4 +70,21 @@ __all__ = [
     "AuthorizationError",
     "ValidationError",
     "NotFoundError",
+    # Enums
+    "TradeStatus",
+    "TradeSide",
+    "InterbankDealType",
+    "RepoTradeType",
+    "RateType",
+    "DayCountConvention",
+    "SettlementStatus",
+    "AuditAction",
+    "EntityType",
+    # State Machine
+    "validate_transition",
+    "get_allowed_transitions",
+    "assert_transition",
+    "BOND_TRADE_TRANSITIONS",
+    "INTERBANK_DEAL_TRANSITIONS",
+    "REPO_TRADE_TRANSITIONS",
 ]

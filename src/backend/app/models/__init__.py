@@ -39,6 +39,9 @@ from app.models.market_data import (
     ThaiBMAMarketData,
     MarketDataImportLog,
 )
+from app.models.audit import (
+    TransactionAuditLog,
+)
 
 __all__ = [
     # Base
@@ -75,4 +78,6 @@ __all__ = [
     # Market Data
     "ThaiBMAMarketData",
     "MarketDataImportLog",
+    # Transaction Audit
+    "TransactionAuditLog",
 ]

@@ -13,6 +13,16 @@ from app.services.settlement_service import (
     BAHTNETMessageGenerator,
     TSDMessageGenerator,
 )
+from app.services.calculation_engine import (
+    CalculationEngine,
+    calculate_simple_interest,
+    calculate_accrued_interest,
+    calculate_bond_trade_amounts,
+    calculate_repo_interest,
+    calculate_interbank_amounts,
+    calculate_day_count_fraction,
+)
+from app.services.audit_service import AuditService
 
 __all__ = [
     # Calendar
@@ -23,4 +33,14 @@ __all__ = [
     # Settlement
     "BAHTNETMessageGenerator",
     "TSDMessageGenerator",
+    # Calculation Engine
+    "CalculationEngine",
+    "calculate_simple_interest",
+    "calculate_accrued_interest",
+    "calculate_bond_trade_amounts",
+    "calculate_repo_interest",
+    "calculate_interbank_amounts",
+    "calculate_day_count_fraction",
+    # Audit
+    "AuditService",
 ]
