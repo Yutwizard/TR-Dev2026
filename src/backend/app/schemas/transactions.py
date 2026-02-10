@@ -149,6 +149,8 @@ class BondTradeList(BaseModel):
 # =============================================================================
 # Interbank Deal Schemas
 # =============================================================================
+from app.core.enums import InterbankDealType, RateType, TradeStatus, DayCountConvention
+
 class InterbankDealBase(BaseModel):
     """Base schema for interbank deal"""
     counterparty_id: str
@@ -156,7 +158,6 @@ class InterbankDealBase(BaseModel):
     
     deal_type: InterbankDealType
     
-    deal_date: date
     start_date: date
     maturity_date: date
     
@@ -165,7 +166,7 @@ class InterbankDealBase(BaseModel):
     rate_type: RateType = RateType.FIXED
     spread: Decimal = Field(default=0, ge=0)
     reference_rate: Optional[str] = None
-    day_count_convention: str = "ACT/365"
+    day_count_convention: DayCountConvention = DayCountConvention.ACT_365
     
     @field_validator('maturity_date')
     @classmethod
@@ -180,14 +181,14 @@ class InterbankDealCreate(InterbankDealBase):
     entity_id: Optional[str] = None
     external_ref: Optional[str] = None
     trader_id: Optional[str] = None
+    currency: str = "THB"
     
     class Config:
         json_schema_extra = {
             "example": {
                 "counterparty_id": "CP_KBANK",
                 "portfolio_id": "MM001",
-                "deal_type": "IB_LEND",
-                "deal_date": "2025-09-01",
+                "deal_type": "PLACEMENT",
                 "start_date": "2025-09-01",
                 "maturity_date": "2025-09-08",
                 "principal_amount": 100000000,
@@ -205,6 +206,7 @@ class InterbankDealResponse(InterbankDealBase):
     entity_id: str
     external_ref: Optional[str] = None
     currency: str = "THB"
+    deal_date: date
     
     # Calculated
     interest_amount: Decimal
@@ -224,12 +226,22 @@ class InterbankDealResponse(InterbankDealBase):
     # Workflow
     trader_id: Optional[str] = None
     approver_id: Optional[str] = None
+    approved_at: Optional[datetime] = None
     
     # Timestamps
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
+
+
+class InterbankDealList(BaseModel):
+    """Schema for listing interbank deals"""
+    items: List[InterbankDealResponse]
+    total: int
+    page: int
+    size: int
 
 
 # =============================================================================
