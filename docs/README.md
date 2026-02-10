@@ -1,144 +1,112 @@
-# Treasury Management System Documentation
+# Treasury Management System - Documentation Hub
 
-**Last Updated:** February 6, 2026
+Welcome to the comprehensive documentation for the Treasury Management System (TMS). This documentation covers everything from getting started to advanced operations.
 
----
+## 📚 Documentation Structure
 
-## 📋 Quick Links
+### 01 - Getting Started
+**Start here if you're new to the project**
+- [Project Summary](./01-getting-started/project-summary.md) - High-level overview of the TMS
+- [Session Starter](./01-getting-started/session-starter.md) - Quick start guide for new developers
+- [Setup Instructions](./01-getting-started/setup.md) - Complete environment setup guide
 
-### For Management / Project Overview
-| Document | Purpose |
-|----------|---------|
-| [Project Summary](./PROJECT_SUMMARY.md) | Complete work summary (Feb 2-5, 2026) |
-| [Stakeholder Checklist](./04-OPERATIONS/STAKEHOLDER_CHECKLIST.md) | Review and sign-off |
+### 02 - Architecture
+**System design and technical architecture**
+- [Technical Details](./02-architecture/technical-details/) - Detailed module-by-module architecture
+  - Core Module (Enums, State Machines, Security)
+  - Models & Database Schema
+  - Services & Business Logic
+  - API Routers & Endpoints
+  - Frontend Architecture
+  - Testing Framework
+  - Operations & DevOps
+- [System Design](./02-architecture/design/SYSTEM_DESIGN.md) - Overall system architecture
+- [Field Reference](./02-architecture/design/FIELD_REFERENCE.md) - Complete field definitions
 
-### For Design Understanding
-| Document | Purpose |
-|----------|---------|
-| [System Design](./01-DESIGN/SYSTEM_DESIGN.md) | Architecture, database, team responsibilities |
-| [Field Reference](./01-DESIGN/FIELD_REFERENCE.md) | Field definitions and update rules |
+### 03 - Development
+**Guides for developers building features**
+- [API Reference](./03-development/guides/API_REFERENCE.md) - API endpoint documentation
+- [Development Guide](./03-development/guides/DEVELOPMENT_GUIDE.md) - Coding standards and practices
+- [Testing Guide](./03-development/guides/TESTING_GUIDE.md) - How to write and run tests
+- [Missing Services Backlog](./03-development/guides/MISSING_SERVICES_BACKLOG.md) - Planned features
 
-### For Operations
-| Document | Purpose |
-|----------|---------|
-| [Transaction Workflows](./02-PROCESSES/TRANSACTION_WORKFLOWS.md) | Step-by-step transaction processes |
-| [Field Workflow Mapping](./02-PROCESSES/FIELD_WORKFLOW_MAPPING.md) | Database fields mapped to workflow steps |
-| [Transaction Flow Diagrams](./02-PROCESSES/TRANSACTION_FLOW_DIAGRAMS.md) | Visual process flow diagrams |
-| [📊 Transaction Flow Portal](./02-PROCESSES/transaction_flow.html) | **Interactive** visual portal (open in browser) |
-| [Pre-Transaction Setup](./02-PROCESSES/PRE_TRANSACTION_SETUP.md) | Client onboarding, bond setup |
-| [Daily Operations](./04-OPERATIONS/DAILY_OPERATIONS.md) | Daily batch procedures |
+### 04 - Business Processes
+**Treasury workflows and transaction flows**
+- [Transaction Workflows](./04-business-processes/workflows/TRANSACTION_WORKFLOWS.md) - Complete transaction lifecycle
+- [Transaction Flow Diagrams](./04-business-processes/workflows/TRANSACTION_FLOW_DIAGRAMS.md) - Visual process flows
+- [Pre-Transaction Setup](./04-business-processes/workflows/PRE_TRANSACTION_SETUP.md) - Required setup before trading
+- [Field-Workflow Mapping](./04-business-processes/workflows/FIELD_WORKFLOW_MAPPING.md) - Data field mappings
 
-### For Development
-| Document | Purpose |
-|----------|---------|
-| [Development Guide](./03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md) | Build the system (10-week plan) |
-| [Setup Instructions](./03-IMPLEMENTATION/SETUP_INSTRUCTIONS.md) | Local environment setup |
-| [API Reference](./03-IMPLEMENTATION/API_REFERENCE.md) | REST API endpoints & examples |
-| [Testing Guide](./03-IMPLEMENTATION/TESTING_GUIDE.md) | Unit, integration & E2E testing |
-
----
-
-## 📁 Document Structure
-
-```
-docs/
-├── README.md                    ← You are here
-├── PROJECT_SUMMARY.md           ← Combined project summary
-│
-├── 01-DESIGN/                   ← System design documents
-│   ├── SYSTEM_DESIGN.md         ← Architecture & database
-│   └── FIELD_REFERENCE.md       ← Field definitions
-│
-├── 02-PROCESSES/                ← Business process docs
-│   ├── TRANSACTION_WORKFLOWS.md ← Transaction steps
-│   ├── FIELD_WORKFLOW_MAPPING.md ← Field-to-workflow mapping
-│   ├── TRANSACTION_FLOW_DIAGRAMS.md ← Visual flow diagrams
-│   ├── transaction_flow.html      ← Interactive portal
-│   └── PRE_TRANSACTION_SETUP.md ← Setup procedures
-│
-├── 03-IMPLEMENTATION/           ← Developer docs
-│   ├── DEVELOPMENT_GUIDE.md     ← Build guide
-│   ├── SETUP_INSTRUCTIONS.md    ← Environment setup
-│   ├── API_REFERENCE.md         ← REST API reference  ✨ NEW
-│   ├── TESTING_GUIDE.md         ← Testing strategy    ✨ NEW
-│   └── MISSING_SERVICES_BACKLOG.md ← Pending services
-│
-├── 04-OPERATIONS/               ← Operations docs
-│   ├── DAILY_OPERATIONS.md      ← Daily procedures
-│   └── STAKEHOLDER_CHECKLIST.md ← Review checklist
-│
-└── archive/                     ← Archived documents
-```
+### 05 - Operations
+**Day-to-day operational procedures**
+- [Daily Operations](./05-operations/daily-ops/DAILY_OPERATIONS.md) - Daily tasks and procedures
+- [Manual Calculation Guide](./05-operations/daily-ops/MANUAL_CALCULATION_GUIDE.md) - Financial formulas
+- [Stakeholder Checklist](./05-operations/daily-ops/STAKEHOLDER_CHECKLIST.md) - Review checklist
 
 ---
 
-## 📊 Document Status
+## 🚀 Quick Navigation
 
-| Document | Status | Last Updated |
-|----------|--------|--------------|
-| System Design | ✅ Current | Feb 5, 2026 |
-| Field Reference | ✅ Current | Feb 5, 2026 |
-| Transaction Workflows | ✅ Current | Feb 5, 2026 |
-| Field Workflow Mapping | ✅ Current | Feb 5, 2026 |
-| Pre-Transaction Setup | ✅ Current | Feb 5, 2026 |
-| Development Guide | ✅ Current | Feb 5, 2026 |
-| Setup Instructions | ✅ Current | Feb 5, 2026 |
-| **API Reference** | ✅ **NEW** | Feb 6, 2026 |
-| **Testing Guide** | ✅ **NEW** | Feb 6, 2026 |
-| Daily Operations | ✅ Current | Feb 5, 2026 |
-| Stakeholder Checklist | ✅ Current | Feb 5, 2026 |
+### For New Team Members
+1. Start with [Project Summary](./01-getting-started/project-summary.md)
+2. Follow [Setup Instructions](./01-getting-started/setup.md)
+3. Read [Development Guide](./03-development/guides/DEVELOPMENT_GUIDE.md)
 
----
+### For Product Managers
+1. Review [System Design](./02-architecture/design/SYSTEM_DESIGN.md)
+2. Study [Transaction Workflows](./04-business-processes/workflows/TRANSACTION_WORKFLOWS.md)
+3. Check [Stakeholder Checklist](./05-operations/daily-ops/STAKEHOLDER_CHECKLIST.md)
 
-## 🚀 Quick Start
+### For Treasury Operations
+1. Start with [Daily Operations](./05-operations/daily-ops/DAILY_OPERATIONS.md)
+2. Reference [Manual Calculation Guide](./05-operations/daily-ops/MANUAL_CALCULATION_GUIDE.md)
+3. Follow [Transaction Workflows](./04-business-processes/workflows/TRANSACTION_WORKFLOWS.md)
 
-### For Developers
-```bash
-# 1. Read Development Guide
-cat 03-IMPLEMENTATION/DEVELOPMENT_GUIDE.md
-
-# 2. Follow Setup Instructions
-cat 03-IMPLEMENTATION/SETUP_INSTRUCTIONS.md
-
-# 3. Start coding!
-```
-
-### For Operations
-```bash
-# 1. Read Daily Operations
-cat 04-OPERATIONS/DAILY_OPERATIONS.md
-
-# 2. Review Transaction Workflows
-cat 02-PROCESSES/TRANSACTION_WORKFLOWS.md
-```
-
-### For Management
-```bash
-# Read Project Summary
-cat PROJECT_SUMMARY.md
-```
+### For Architects & Technical Leads
+1. Review [Technical Details](./02-architecture/technical-details/)
+2. Check [API Reference](./03-development/guides/API_REFERENCE.md)
+3. Study [Testing Framework](./02-architecture/technical-details/06_testing_framework.md)
 
 ---
 
-## 📞 Support
+## 📁 Additional Resources
 
-| Question Type | Contact |
-|---------------|---------|
-| System Design | Architecture Team |
-| Process Questions | Business Analyst |
-| Technical Issues | Development Team |
-| Operations | Back Office Lead |
+- **Archive** - Historical documents and deprecated guides
+- **Requirements** - Original requirements and specifications
+- **Analysis** - Analysis reports and reviews
+- **Reference** - Quick reference materials
 
 ---
 
-## 📝 Notes
+## 🔍 Finding What You Need
 
-- All documents use `snake_case` naming convention
-- Database design is authoritative source (from Treasury_System_Database_V2_Internal.xlsx)
-- Limits: `PLACEMENT_LIMIT`, `REPO_LIMIT` (no aggregate limit)
-- Security Master: Back Office ownership
-- ThaiBMA import: 17:00 (normal), 17:30-18:00 (month-end)
+- **System Architecture?** → See Section 02 - Architecture
+- **How to build features?** → See Section 03 - Development  
+- **Business rules?** → See Section 04 - Business Processes
+- **Daily tasks?** → See Section 05 - Operations
+- **Setup help?** → See Section 01 - Getting Started
 
 ---
 
-**Document End**
+## 📝 Document Conventions
+
+- **README.md** - Always the entry point for each section
+- **Diagrams** - MermaidJS format for version control
+- **Links** - Relative paths for portability
+- **Updates** - Keep docs in sync with code changes
+
+---
+
+## 🤝 Contributing to Docs
+
+When adding new documentation:
+1. Place it in the appropriate numbered section
+2. Update this index if adding a major document
+3. Use MermaidJS for diagrams
+4. Keep language clear and concise
+5. Include examples where helpful
+
+---
+
+**Last Updated**: 2026-02-10  
+**Version**: 0.3.0
