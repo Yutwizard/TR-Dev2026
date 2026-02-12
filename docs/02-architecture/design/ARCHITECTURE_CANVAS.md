@@ -73,18 +73,18 @@ Visualizes how data moves through the system during a typical trade lifecycle.
 
 ```mermaid
 flowchart TD
-    subgraph Frontend Logic
+    subgraph Frontend ["Frontend Logic"]
         UI[User Interface] -->|1. Submit Trade| VAL[Validation Layer]
         VAL -->|2. Valid Request| API[API Client]
     end
 
-    subgraph Backend API
+    subgraph Backend ["Backend API"]
         API -->|3. POST /trades| ROUTER[FastAPI Router]
         ROUTER -->|4. Check Auth| AUTH[Auth Middleware]
         AUTH -->|5. Verify Perms| RBAC[RBAC Service]
     end
 
-    subgraph Business Logic
+    subgraph Business ["Business Logic"]
         RBAC -->|6. Authorized| SERVICE[Trade Service]
         SERVICE -->|7. Check Limit(Limit Service)| LIMIT{Limit OK?}
         LIMIT -- No --> REJECT[Reject Trade]
@@ -92,13 +92,13 @@ flowchart TD
         CALC -->|8. Enriched Data| DB_TX[DB Transaction]
     end
 
-    subgraph Data Persistence
+    subgraph Data ["Data Persistence"]
         DB_TX -->|9. Insert Trade| TABLE_A[(Trades Table)]
         DB_TX -->|10. Update utilization| TABLE_B[(Limits Table)]
         DB_TX -->|11. Create Audit| TABLE_C[(Audit Log)]
     end
 
-    subgraph Post-Process
+    subgraph Post ["Post-Process"]
         DB_TX -->|12. Commit Success| EVENT[Event Bus / Queue]
         EVENT -->|13. Async| POSITION[Position Service: Update]
     end
@@ -110,25 +110,25 @@ flowchart TD
 Shows how the system is deployed in a production-like environment (Docker).
 
 ```mermaid
-graph TB
-    subgraph "Docker Host"
-        subgraph "Frontend Network"
-            NextJS[Next.js Container :3000]
+flowchart TB
+    subgraph Docker ["Docker Host"]
+        subgraph FrontendNet ["Frontend Network"]
+            NextJS["Next.js Container :3000"]
         end
 
-        subgraph "Backend Network"
-            FastAPI[FastAPI Container :8000]
-            Worker[Celery Worker (Future)]
+        subgraph BackendNet ["Backend Network"]
+            FastAPI["FastAPI Container :8000"]
+            Worker["Celery Worker (Future)"]
         end
 
-        subgraph "Data Persistence Layer"
-            Postgres[(PostgreSQL 15 :5432)]
-            Redis[(Redis 7 :6379)]
+        subgraph DataLayer ["Data Persistence Layer"]
+            Postgres[("PostgreSQL 15 :5432")]
+            Redis[("Redis 7 :6379")]
         end
 
-        subgraph "Management & Observability"
-            Adminer[Adminer GUI :8080]
-            Commander[Redis Commander :8081]
+        subgraph Mgmt ["Management & Observability"]
+            Adminer["Adminer GUI :8080"]
+            Commander["Redis Commander :8081"]
         end
     end
 
