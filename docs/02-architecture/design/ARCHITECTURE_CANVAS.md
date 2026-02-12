@@ -86,7 +86,7 @@ flowchart TD
 
     subgraph Business ["Business Logic"]
         RBAC -->|6. Authorized| SERVICE[Trade Service]
-        SERVICE -->|7. Check Limit(Limit Service)| LIMIT{Limit OK?}
+        SERVICE -->|7. Check Limit - Limit Service| LIMIT{Limit OK?}
         LIMIT -- No --> REJECT[Reject Trade]
         LIMIT -- Yes --> CALC[Calc Engine: Price/Yield]
         CALC -->|8. Enriched Data| DB_TX[DB Transaction]
