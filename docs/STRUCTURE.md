@@ -42,20 +42,15 @@ docs/
 │       ├── PRE_TRANSACTION_SETUP.md  # Required setup
 │       └── FIELD_WORKFLOW_MAPPING.md  # Data mappings
 │
-├── 05-operations/                    # 🔧 Daily operations
-│   ├── README.md                     # Operations overview
-│   └── daily-ops/
-│       ├── DAILY_OPERATIONS.md      # Day-to-day tasks
-│       ├── MANUAL_CALCULATION_GUIDE.md  # Financial formulas
-│       └── STAKEHOLDER_CHECKLIST.md  # Review checklist
-│
-└── archive/                          # 📦 Historical documents
-    ├── analysis/                     # Old analysis reports
-    ├── requirements/                 # Original requirements
-    ├── reference/                    # Old reference materials
-    ├── old-implementation/           # Deprecated guides
-    └── [legacy documents]            # Archived but preserved
+└── 05-operations/                    # 🔧 Daily operations
+    ├── README.md                     # Operations overview
+    └── daily-ops/
+        ├── DAILY_OPERATIONS.md      # Day-to-day tasks
+        ├── MANUAL_CALCULATION_GUIDE.md  # Financial formulas
+        └── STAKEHOLDER_CHECKLIST.md  # Review checklist
 ```
+
+> **Note:** The `archive/` folder has been moved to the **project root** (`/archive/`) and is no longer inside `docs/`. It contains historical documents, old analysis reports, original requirements, and deprecated guides.
 
 ## Quick Navigation
 
@@ -66,7 +61,7 @@ docs/
 | **Build features** | `03-development/guides/` |
 | **Learn business rules** | `04-business-processes/workflows/` |
 | **Run daily operations** | `05-operations/daily-ops/` |
-| **Find old docs** | `archive/` |
+| **Find old docs** | `../../archive/` (project root) |
 
 ## Document Naming Convention
 

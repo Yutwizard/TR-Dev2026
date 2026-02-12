@@ -1,7 +1,7 @@
 # Treasury Management System - Combined Session Summary
 
 **Project:** Treasury Management System Development  
-**Period:** February 2-10, 2026  
+**Period:** February 2-11, 2026  
 **Status:** Phase 0 Architecture Complete, Sprint 3 (Interbank) Core Implemented  
 
 ---
@@ -18,6 +18,7 @@ This document combines all development work from February 2-3, 2026:
 | **Feb 5 (PM)** | Field Alignment & Interactive Portal | Added 77 missing fields, created FIELD_WORKFLOW_MAPPING.md, interactive HTML portal |
 | **Feb 5 (Eve)** | Portal Enhancements | Fixed Month-End flow alignment, improved PDF export (all 10 flows), expanded to 10 flow categories |
 | **Feb 10** | Architecture & Interbank | Phase 0 Cleanup (Enums, Audit), Interbank Service Refactor, EOD Batch Script, Unit Tests |
+| **Feb 11** | Housekeeping & Schema Planning | Moved `archive/` to project root, updated all doc references, planned accrued interest & daily calc table changes |
 
 **Total Output:**
 - 94+ API endpoints
@@ -306,13 +307,13 @@ Day Count Base (from security_master.coupon_day_count_conv):
 
 | Action | Description | Status |
 |--------|-------------|--------|
-| **Folder Structure** | Created 01-DESIGN, 02-PROCESSES, 03-IMPLEMENTATION, 04-OPERATIONS, archive | ✅ Done |
+| **Folder Structure** | Created 01-DESIGN, 02-PROCESSES, 03-IMPLEMENTATION, 04-OPERATIONS; moved archive to project root | ✅ Done |
 | **Merge: SYSTEM_DESIGN.md** | Merged Detailed_Design + Architecture + Alignment_Review | ✅ Done |
 | **Merge: DEVELOPMENT_GUIDE.md** | Merged Data_to_Architecture + Condensed_Plan | ✅ Done |
 | **Create: README.md** | Entry point with navigation | ✅ Done |
 | **Create: DAILY_OPERATIONS.md** | Extracted from Transaction_Workflows | ✅ Done |
 | **Rename & Move** | 4 documents moved to appropriate folders | ✅ Done |
-| **Archive** | 8 old documents moved to archive/ with _ARCHIVED suffix | ✅ Done |
+| **Archive** | 8 old documents moved to `/archive/` (project root) with _ARCHIVED suffix | ✅ Done |
 | **Create: TRANSACTION_FLOW_DIAGRAMS.md** | Visual Mermaid diagrams for all processes | ✅ Done |
 
 #### Result
@@ -346,12 +347,16 @@ docs/
 │   ├── DEVELOPMENT_GUIDE.md               ← Build guide
 │   └── SETUP_INSTRUCTIONS.md              ← Environment setup
 │
-├── 04-OPERATIONS/
-│   ├── DAILY_OPERATIONS.md                ← Daily procedures
-│   ├── STAKEHOLDER_CHECKLIST.md           ← Review checklist
-│   └── MANUAL_CALCULATION_GUIDE.md        ← Troubleshooting calculations ← NEW
-│
-└── archive/                               ← Old documents preserved
+└── 04-OPERATIONS/
+    ├── DAILY_OPERATIONS.md                ← Daily procedures
+    ├── STAKEHOLDER_CHECKLIST.md           ← Review checklist
+    └── MANUAL_CALCULATION_GUIDE.md        ← Troubleshooting calculations ← NEW
+
+archive/                                   ← Moved to project root (was docs/archive/)
+├── analysis/
+├── requirements/
+├── reference/
+└── old-implementation/
 ```
 
 ### Visual Flow Diagrams Created
@@ -685,7 +690,12 @@ docs/
 │   ├── DAILY_OPERATIONS.md
 │   ├── STAKEHOLDER_CHECKLIST.md
 │   └── MANUAL_CALCULATION_GUIDE.md
-└── archive/
+
+archive/                  ← Project root (moved from docs/ on Feb 11)
+├── analysis/
+├── requirements/
+├── reference/
+└── old-implementation/
 ```
 
 #### Task #3: Update Stats Table
@@ -715,4 +725,4 @@ docs/
 
 *Sprints 1-3 Complete | 20/20 Tests Passing | Documentation Restructure Complete | Field Alignment Complete | Interactive Portal Created | Awaiting Bond Process Review*
 
-**Last Updated:** February 10, 2026 13:47 ICT
+**Last Updated:** February 11, 2026 11:56 ICT

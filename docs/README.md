@@ -75,10 +75,10 @@ Welcome to the comprehensive documentation for the Treasury Management System (T
 
 ## 📁 Additional Resources
 
-- **Archive** - Historical documents and deprecated guides
-- **Requirements** - Original requirements and specifications
-- **Analysis** - Analysis reports and reviews
-- **Reference** - Quick reference materials
+- **[Archive](../archive/)** - Historical documents and deprecated guides (moved to project root)
+- **[Requirements](../archive/requirements/)** - Original requirements and specifications
+- **[Analysis](../archive/analysis/)** - Analysis reports and reviews
+- **[Reference](../archive/reference/)** - Quick reference materials
 
 ---
 
@@ -112,5 +112,5 @@ When adding new documentation:
 
 ---
 
-**Last Updated**: 2026-02-10  
-**Version**: 0.3.0
+**Last Updated**: 2026-02-11  
+**Version**: 0.3.1
