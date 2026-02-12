@@ -1,5 +1,5 @@
 graph TD
-    subgraph Bond Trade Lifecycle
+    subgraph Bond ["Bond Trade Lifecycle"]
         B1(DRAFT) --> B2(PENDING_APPROVAL)
         B2 --> B3(APPROVED)
         B2 --> B1
@@ -9,7 +9,7 @@ graph TD
         B3 -- Cancelled --> B6(CANCELLED)
     end
 
-    subgraph Repo Lifecycle
+    subgraph Repo ["Repo Lifecycle"]
         R1(DRAFT) --> R2(PENDING_APPROVAL)
         R2 --> R3(APPROVED)
         R3 --> R4(ACTIVE)
